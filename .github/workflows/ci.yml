@@ -32,6 +32,9 @@ jobs:
         env:
           VITE_BASE: /tadericson/
 
+      - name: Prepare SPA fallback (404.html)
+        run: cp dist/index.html dist/404.html || true
+
       - name: Verify PWA output
         run: |
           test -f dist/index.html

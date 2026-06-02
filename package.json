@@ -6,7 +6,7 @@
   "description": "tadericson.com — Progressive Web App personal site for Tad Ericson",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && cp dist/index.html dist/404.html || true",
     "lint": "eslint .",
     "preview": "vite preview",
     "pwa:build": "npm run build && echo 'PWA ready in dist/ (includes sw.js + manifest)'"
