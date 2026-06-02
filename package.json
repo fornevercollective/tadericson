@@ -9,7 +9,8 @@
     "build": "tsc -b && vite build && cp dist/index.html dist/404.html || true",
     "lint": "eslint .",
     "preview": "vite preview",
-    "pwa:build": "npm run build && echo 'PWA ready in dist/ (includes sw.js + manifest)'"
+    "pwa:build": "npm run build && echo 'PWA ready in dist/ (includes sw.js + manifest)'",
+    "rotator-server": "node rotator-server.cjs"
   },
   "dependencies": {
     "framer-motion": "^12.40.0",

@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { ExternalLink, Camera, Play, Pause } from 'lucide-react'
 
 function App() {
@@ -73,6 +73,130 @@ function App() {
     draw()
   }, [pixelSize, blurAmount])
 
+  // Video concept: Media rotator for high-res images/videos/gifs
+  // Controlled via in-browser "terminal server" for testing/deployment simulation
+  const [mediaItems, setMediaItems] = useState([
+    { id: 1, type: 'image', url: 'https://picsum.photos/id/1015/1920/1080', title: 'High Res Landscape' },
+    { id: 2, type: 'image', url: 'https://picsum.photos/id/160/1920/1080', title: 'Mountain Study' },
+    { id: 3, type: 'gif', url: 'https://media.giphy.com/media/3oEjI6SIIHBdRxz40w/giphy.gif', title: 'Abstract Motion' },
+    { id: 4, type: 'video', url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4', title: 'Elephants Dream (sample video)' },
+    { id: 5, type: 'image', url: 'https://picsum.photos/id/201/1920/1080', title: 'Urban Texture' },
+  ])
+  const [currentMediaIndex, setCurrentMediaIndex] = useState(0)
+  const [isRotating, setIsRotating] = useState(false)
+  const [rotationInterval, setRotationInterval] = useState(4000)
+  const [terminalLines, setTerminalLines] = useState([
+    '[TERMINAL SERVER v0.1] Small media rotator server activated.',
+    'Type "help" for available commands. For local testing: run "npm run rotator-server" in terminal.',
+    'High-res media rotation ready. Add your files via "add <url>".'
+  ])
+  const [terminalInput, setTerminalInput] = useState('')
+  const rotatorTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  // Rotation timer
+  useEffect(() => {
+    if (rotatorTimerRef.current) {
+      clearInterval(rotatorTimerRef.current)
+      rotatorTimerRef.current = null
+    }
+    if (isRotating && mediaItems.length > 0) {
+      rotatorTimerRef.current = setInterval(() => {
+        setCurrentMediaIndex((prev) => (prev + 1) % mediaItems.length)
+      }, rotationInterval)
+    }
+    return () => {
+      if (rotatorTimerRef.current) clearInterval(rotatorTimerRef.current)
+    }
+  }, [isRotating, rotationInterval, mediaItems.length])
+
+  const currentMedia = mediaItems[currentMediaIndex] || mediaItems[0]
+
+  const executeTerminalCommand = (rawCmd: string) => {
+    const cmd = rawCmd.trim()
+    if (!cmd) return
+
+    const parts = cmd.toLowerCase().split(/\s+/)
+    const command = parts[0]
+    let output = `> ${cmd}`
+
+    switch (command) {
+      case 'help':
+        output += '\nAvailable commands:\n  next / prev\n  play / pause\n  speed <ms>\n  list\n  status\n  add <url> [image|video|gif]\n  activate / server  (start small terminal server simulation)\n  deploy  (deploy rotator to local server for testing)\n  clear'
+        break
+      case 'next':
+        setCurrentMediaIndex(i => (i + 1) % mediaItems.length)
+        output += '\nNext media loaded.'
+        break
+      case 'prev':
+        setCurrentMediaIndex(i => (i - 1 + mediaItems.length) % mediaItems.length)
+        output += '\nPrevious media loaded.'
+        break
+      case 'play':
+        setIsRotating(true)
+        output += '\nRotation activated.'
+        break
+      case 'pause':
+        setIsRotating(false)
+        output += '\nRotation paused.'
+        break
+      case 'speed':
+        const ms = parseInt(parts[1])
+        if (ms >= 1000) {
+          setRotationInterval(ms)
+          output += `\nRotation interval set to ${ms}ms.`
+        } else {
+          output += '\nMinimum speed 1000ms.'
+        }
+        break
+      case 'list':
+        output += '\n' + mediaItems.map((m, i) => `  ${i}: [${m.type}] ${m.title}`).join('\n')
+        break
+      case 'status':
+        output += `\nIndex: ${currentMediaIndex} | Rotating: ${isRotating} | Interval: ${rotationInterval}ms | Items: ${mediaItems.length}`
+        break
+      case 'add':
+        if (parts[1]) {
+          const url = parts[1]
+          const type = parts[2] || 'image'
+          const newItem = { id: Date.now(), type, url, title: url.split('/').pop() || 'Custom Media' }
+          setMediaItems(prev => [...prev, newItem])
+          output += `\nAdded ${type}: ${url} (session only; for persistent add to media list in code)`
+        } else {
+          output += '\nUsage: add <url> [image|video|gif]'
+        }
+        break
+      case 'activate':
+      case 'server':
+        output += '\n[TERMINAL SERVER] Activating small terminal server...'
+        output += '\n[SERVER] localhost:8080 ready for media rotation.'
+        output += '\n[SERVER] High-res images/videos/gifs will cycle here.'
+        output += '\n[SERVER] Use "deploy" to test deployment from this build.'
+        setIsRotating(true)
+        break
+      case 'deploy':
+        output += '\n[DEPLOY] Packaging current rotator for local server...'
+        output += '\n[DEPLOY] Deployed to terminal server. Test at http://localhost:8080 (run npm run rotator-server in your terminal for real local server).'
+        output += '\n[DEPLOY] For high-res: place files in public/media/ and update list or use "add".'
+        break
+      case 'clear':
+        setTerminalLines(['[TERMINAL SERVER] Output cleared.'])
+        setTerminalInput('')
+        return
+      default:
+        output += '\nUnknown command. Type "help".'
+    }
+
+    setTerminalLines(prev => [...prev.slice(-12), output]) // keep recent
+  }
+
+  const handleTerminalSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (terminalInput.trim()) {
+      executeTerminalCommand(terminalInput)
+      setTerminalInput('')
+    }
+  }
+
   const projects = [
     { title: "Accident", year: "2017", role: "Camera / Tech", imdb: "https://www.imdb.com/title/tt5719706/" },
     { title: "A.C.O.D.", year: "2013", role: "Camera Department", imdb: "https://www.imdb.com/title/tt2416374/" },
@@ -104,7 +228,7 @@ function App() {
             TAD ERICSON
           </div>
           <div className="flex gap-7 text-sm uppercase tracking-[1.5px] text-zinc-500">
-            {['work', 'awards', 'collective', 'tree', 'contact'].map(s => (
+            {['work', 'awards', 'collective', 'tree', 'video', 'contact'].map(s => (
               <button 
                 key={s} 
                 onClick={() => scrollToSection(s)} 
@@ -272,6 +396,84 @@ function App() {
           Active lines include First Nation, Powhatan, Lenapehoking, Roskelyn, Dunkeld, Hauteville, and Lodbrock.
         </p>
         <a href="https://tadericson.com/tree" target="_blank" className="text-emerald-600 hover:underline text-sm">Explore the original tree archive →</a>
+      </section>
+
+      {/* VIDEO / TERMINAL SERVER - for high res images/videos/gifs rotation */}
+      <section id="video" className="border-t border-zinc-100 py-16 max-w-5xl mx-auto px-6">
+        <div className="uppercase tracking-[2px] text-xs text-emerald-600 mb-2">VIDEO CONCEPT</div>
+        <h2 className="text-4xl font-light tracking-tight mb-6">Terminal Media Server</h2>
+        <p className="max-w-2xl text-lg text-zinc-600 mb-8">
+          Activate the small terminal server to control rotation of high-res images, videos and gifs. 
+          For local testing: use the terminal below or run <code className="bg-zinc-100 px-1">npm run rotator-server</code> in your terminal (see package.json).
+          Deploy your build to the local server for testing the rotator with your own high-res files.
+        </p>
+
+        {/* Media Rotator Display */}
+        <div className="mb-8 border border-zinc-200 rounded-3xl overflow-hidden bg-black aspect-video relative flex items-center justify-center">
+          {currentMedia && (
+            currentMedia.type === 'video' ? (
+              <video 
+                key={currentMedia.id}
+                src={currentMedia.url} 
+                className="max-h-full max-w-full object-contain" 
+                autoPlay 
+                muted 
+                loop 
+                playsInline
+              />
+            ) : (
+              <img 
+                key={currentMedia.id}
+                src={currentMedia.url} 
+                alt={currentMedia.title} 
+                className="max-h-full max-w-full object-contain" 
+              />
+            )
+          )}
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 p-4 text-white text-sm flex justify-between items-end">
+            <div>
+              <div className="font-light">{currentMedia?.title}</div>
+              <div className="text-xs opacity-70">{currentMedia?.type} • {currentMediaIndex + 1} / {mediaItems.length}</div>
+            </div>
+            <div className="text-xs opacity-70">
+              {isRotating ? 'ROTATING' : 'PAUSED'} @ {rotationInterval}ms
+            </div>
+          </div>
+        </div>
+
+        {/* Terminal Server Interface */}
+        <div className="border border-zinc-200 rounded-3xl bg-zinc-950 text-green-400 font-mono text-sm p-4">
+          <div className="flex items-center gap-2 mb-2 text-green-500 text-xs uppercase tracking-widest">
+            <span>TERMINAL SERVER</span> 
+            <span className="text-green-400">●</span> 
+            <span>localhost:8080</span>
+          </div>
+
+          <div className="h-48 overflow-auto bg-black p-3 mb-3 text-green-300 whitespace-pre-wrap text-xs leading-relaxed border border-green-900">
+            {terminalLines.map((line, i) => <div key={i}>{line}</div>)}
+          </div>
+
+          <form onSubmit={handleTerminalSubmit} className="flex gap-2">
+            <span className="text-green-500 pt-1">$</span>
+            <input
+              type="text"
+              value={terminalInput}
+              onChange={(e) => setTerminalInput(e.target.value)}
+              placeholder="Type command (help, play, next, activate, deploy, add ...)"
+              className="flex-1 bg-transparent border-none focus:outline-none text-green-400 placeholder-green-800"
+              autoComplete="off"
+            />
+            <button type="submit" className="px-4 py-1 border border-green-800 text-green-400 hover:bg-green-900/30 text-xs">EXEC</button>
+          </form>
+          <div className="text-[10px] text-green-800 mt-2">
+            Pro tip: "activate" or "server" starts the rotator server simulation. "deploy" simulates deploying the rotator for testing. Add your high-res URLs with "add".
+          </div>
+        </div>
+
+        <div className="mt-4 text-xs text-zinc-500">
+          For real local server with your high-res media: place files in a <code>public/media</code> folder (or serve from elsewhere) and update the mediaItems array. 
+          Run <code>npm run rotator-server</code> (add the script if not present) to host a small terminal-style server for testing the deployment.
+        </div>
       </section>
 
       {/* CONTACT */}
