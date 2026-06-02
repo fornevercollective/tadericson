@@ -103,7 +103,7 @@ export const infoCredits: CreditGroup[] = [
 
 export const projects: Project[] = [
   // TV
-  { slug: 'smash', title: 'Smash', category: 'tv', year: '2012', role: 'VFX / Graphics', imdb: 'https://www.imdb.com/title/tt2320807/', images: ['https://cdn.myportfolio.com/a0bfb375047485c1e2494453e8c793bc/7e3d6801-a2e5-4327-950f-8d26391ee9a3_rwc_0x122x519x405x32.jpg?h=d34328c1226552ecafb042475329761c'] },
+  { slug: 'smash', title: 'Smash', category: 'tv', year: '2012', role: 'VFX / Graphics', imdb: 'https://www.imdb.com/title/tt2320807/', description: 'NBC musical drama series. Motion graphics and visual effects support.', images: ['https://cdn.myportfolio.com/a0bfb375047485c1e2494453e8c793bc/7e3d6801-a2e5-4327-950f-8d26391ee9a3_rwc_0x122x519x405x32.jpg?h=d34328c1226552ecafb042475329761c'] },
   { slug: 'bates-motel', title: 'Bates Motel', category: 'tv', images: ['https://cdn.myportfolio.com/a0bfb375047485c1e2494453e8c793bc/32af9029-8d48-41fc-86c0-e460de991c59_rwc_69x0x465x364x32.jpg?h=9b7be87516a74dd0a61030e205494b20'] },
   { slug: 'unbreakable-kimmy-schmidt', title: 'Unbreakable Kimmy Schmidt', category: 'tv', images: ['https://cdn.myportfolio.com/a0bfb375047485c1e2494453e8c793bc/dfb23e3e-fea0-4a81-b672-7773fce9d775_rwc_53x0x729x570x32.jpg?h=c207dc99dfd4d98655c673967ab74129'] },
   { slug: 'borgia', title: 'Borgia', category: 'tv', images: ['https://cdn.myportfolio.com/a0bfb375047485c1e2494453e8c793bc/e6e3136c-d0b8-4eda-a3aa-3caed26ac799_rwc_248x0x959x750x32.jpeg?h=5395dbce4b9ef36a4d98df38f8c1e19b'] },
@@ -115,7 +115,7 @@ export const projects: Project[] = [
 
   // FILM
   { slug: 'penguins-of-madagascar', title: 'Penguins of Madagascar', category: 'film', images: ['https://cdn.myportfolio.com/a0bfb375047485c1e2494453e8c793bc/f8b0b873-00af-42de-b01f-21f47a1d022a_carw_202x158x32.jpg?h=748fc606e1ba79808168aae88540f772'] },
-  { slug: 'acod', title: 'A.C.O.D. (Adult Children of Divorce)', category: 'film', year: '2013', imdb: 'https://www.imdb.com/title/tt1935896/', images: ['https://cdn.myportfolio.com/a0bfb375047485c1e2494453e8c793bc/b6f060ef-c9d0-469a-bf4d-f392c309fc3c_rwc_0x160x1864x1457x32.png?h=0ef98282b6ee562b4e19700d69db452e'] },
+  { slug: 'acod', title: 'A.C.O.D. (Adult Children of Divorce)', category: 'film', year: '2013', imdb: 'https://www.imdb.com/title/tt1935896/', description: 'Feature film. VFX contributions.', images: ['https://cdn.myportfolio.com/a0bfb375047485c1e2494453e8c793bc/b6f060ef-c9d0-469a-bf4d-f392c309fc3c_rwc_0x160x1864x1457x32.png?h=0ef98282b6ee562b4e19700d69db452e'] },
   { slug: 'accident', title: 'Accident', category: 'film', year: '2017', images: ['https://cdn.myportfolio.com/a0bfb375047485c1e2494453e8c793bc/55554e4e-4e48-4383-8cc8-72efb70d6090_carw_202x158x32.jpg?h=4f47f26e1d8e380d82b220233a952f0e'] },
   { slug: 'first-winter', title: 'First Winter', category: 'film', images: ['https://cdn.myportfolio.com/a0bfb375047485c1e2494453e8c793bc/4d3a6005-f800-4dd7-95e4-455f7acff816_rwc_0x214x486x379x32.jpg?h=62098897a717b2093f3e32d403f7c606'] },
   { slug: 'yoga-slackers', title: 'Yoga Slackers', category: 'film', images: ['https://cdn.myportfolio.com/a0bfb375047485c1e2494453e8c793bc/369de9b2-cd2f-45e0-9b91-27c5669e3775_rwc_184x226x488x381x32.jpg?h=aa1688bf553875a777997c16d21e0239'] },
