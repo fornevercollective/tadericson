@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Routes, Route, Link, useLocation, useParams, Navigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, Menu, X, Download, ExternalLink } from 'lucide-react'
+import { ArrowLeft, Menu, X, Download, ExternalLink, Sun, Moon } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   navSections,
@@ -51,6 +51,7 @@ function Nav() {
 
         <div className="flex items-center gap-3">
           <PWAInstallButton />
+          <ThemeToggle />
           <button
             onClick={() => setOpen(!open)}
             className="md:hidden p-2 -mr-2"
@@ -70,6 +71,10 @@ function Nav() {
             </Link>
           ))}
           <a href="https://tadericson.com" target="_blank" rel="noreferrer" className="block py-2 opacity-60">ORIGINAL SITE →</a>
+          <div className="pt-3 mt-2 border-t border-[var(--border)] flex items-center justify-between text-xs normal-case tracking-normal">
+            <span className="opacity-70">Theme</span>
+            <ThemeToggle />
+          </div>
         </div>
       )}
     </nav>
@@ -116,6 +121,37 @@ function PWAInstallButton() {
       title="Install PWA"
     >
       <Download size={14} /> INSTALL
+    </button>
+  )
+}
+
+function ThemeToggle() {
+  const [theme, setTheme] = useState<'light' | 'dark'>('light')
+
+  useEffect(() => {
+    const stored = localStorage.getItem('theme') as 'light' | 'dark' | null
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+    const initial: 'light' | 'dark' = stored || (prefersDark ? 'dark' : 'light')
+    setTheme(initial)
+    document.documentElement.classList.toggle('dark', initial === 'dark')
+  }, [])
+
+  const toggle = () => {
+    const next: 'light' | 'dark' = theme === 'light' ? 'dark' : 'light'
+    setTheme(next)
+    localStorage.setItem('theme', next)
+    document.documentElement.classList.toggle('dark', next === 'dark')
+  }
+
+  const isDark = theme === 'dark'
+  return (
+    <button
+      onClick={toggle}
+      className="p-2 rounded-full border border-[var(--border)] hover:bg-[var(--card-bg)] transition flex items-center justify-center"
+      aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+      title="Toggle theme"
+    >
+      {isDark ? <Sun size={16} /> : <Moon size={16} />}
     </button>
   )
 }
@@ -227,7 +263,11 @@ function Home() {
 }
 
 function SectionPage({ category, title, extraCredits }: { category: Project['category']; title: string; extraCredits?: React.ReactNode }) {
-  const projs = getProjectsByCategory(category)
+  const allProjs = getProjectsByCategory(category)
+  const [query, setQuery] = useState('')
+  const projs = query
+    ? allProjs.filter(p => p.title.toLowerCase().includes(query.toLowerCase()) || (p.description || '').toLowerCase().includes(query.toLowerCase()))
+    : allProjs
 
   return (
     <PageTransition>
@@ -237,23 +277,37 @@ function SectionPage({ category, title, extraCredits }: { category: Project['cat
           <Link to="/" className="text-xs opacity-60 hover:opacity-100 hidden md:block">BACK TO HOME</Link>
         </div>
 
-        {projs.length > 0 && (
+        {allProjs.length > 0 && (
           <>
+            <div className="mb-4 flex items-center gap-3">
+              <input
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={`Search ${title.toLowerCase()}...`}
+                className="flex-1 max-w-sm bg-[var(--card-bg)] border border-[var(--border)] rounded px-3 py-2 text-sm focus:outline-none focus:border-[var(--fg)]"
+              />
+              {query && <button onClick={() => setQuery('')} className="text-xs opacity-60 hover:opacity-100">clear</button>}
+            </div>
             <p className="text-sm text-[var(--fg-muted)] mb-6">Click any image for details. Images cached for offline viewing.</p>
             <div className="gallery-grid mb-12">
-              {projs.map(p => (
-                <Link key={p.slug} to={`/${p.category}/${p.slug}`} className="gallery-item group">
-                  <img
-                    src={p.images[0]}
-                    alt={p.title}
-                    loading="lazy"
-                    className="group-hover:scale-[1.03] transition-transform duration-300"
-                  />
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3 text-white text-sm font-medium tracking-wide">
-                    {p.title} {p.year && <span className="opacity-70">· {p.year}</span>}
-                  </div>
-                </Link>
-              ))}
+              {projs.length > 0 ? (
+                projs.map(p => (
+                  <Link key={p.slug} to={`/${p.category}/${p.slug}`} className="gallery-item group">
+                    <img
+                      src={p.images[0]}
+                      alt={p.title}
+                      loading="lazy"
+                      className="group-hover:scale-[1.03] transition-transform duration-300"
+                    />
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3 text-white text-sm font-medium tracking-wide">
+                      {p.title} {p.year && <span className="opacity-70">· {p.year}</span>}
+                    </div>
+                  </Link>
+                ))
+              ) : (
+                <div className="col-span-full text-center py-8 text-[var(--fg-muted)]">No matches for “{query}”.</div>
+              )}
             </div>
           </>
         )}
@@ -308,18 +362,98 @@ function TwoD() {
 
 function Tree() {
   const treeProjects = getProjectsByCategory('tree')
+  const [selected, setSelected] = useState<string | null>(null)
+
+  // Simple radial tree visualization (inspired by spatial/mapping patterns in related qbitOS work)
+  const centerX = 200
+  const centerY = 140
+  const radius = 95
+
   return (
     <PageTransition>
       <div className="pt-10">
         <h1 className="section-header">TREE — Ancestry</h1>
-        <div className="max-w-prose text-[var(--fg-muted)] mb-8">
-          Ongoing personal research into deep ancestry, guided by elders and primary records. 
+        <div className="max-w-prose text-[var(--fg-muted)] mb-4">
+          Ongoing personal research into deep ancestry, guided by elders and primary records.
           Lines currently under active exploration:
         </div>
 
+        {/* Interactive radial tree / map */}
+        <div className="mb-8 flex justify-center">
+          <svg
+            width="420"
+            height="290"
+            viewBox="0 0 420 290"
+            className="border border-[var(--border)] bg-[var(--card-bg)] rounded cursor-pointer"
+            onClick={() => setSelected(null)}
+          >
+            {/* connections */}
+            {treeProjects.map((p, i) => {
+              const angle = (i / treeProjects.length) * Math.PI * 2 - Math.PI / 2
+              const x = centerX + Math.cos(angle) * radius
+              const y = centerY + Math.sin(angle) * radius
+              const isSel = selected === p.slug
+              return (
+                <g key={p.slug}>
+                  <line
+                    x1={centerX}
+                    y1={centerY}
+                    x2={x}
+                    y2={y}
+                    stroke={isSel ? 'var(--fg)' : 'var(--border)'}
+                    strokeWidth={isSel ? 2 : 1}
+                  />
+                  <circle
+                    cx={x}
+                    cy={y}
+                    r={isSel ? 7 : 5}
+                    fill={isSel ? 'var(--fg)' : 'var(--bg)'}
+                    stroke="var(--fg)"
+                    strokeWidth="1.5"
+                    onClick={(e) => { e.stopPropagation(); setSelected(p.slug) }}
+                    className="hover:stroke-[var(--accent)]"
+                  />
+                </g>
+              )
+            })}
+            {/* center node */}
+            <circle cx={centerX} cy={centerY} r="11" fill="var(--fg)" />
+            <text x={centerX} y={centerY + 4} textAnchor="middle" fill="var(--bg)" fontSize="10" fontWeight="600">TAD</text>
+
+            {/* labels */}
+            {treeProjects.map((p, i) => {
+              const angle = (i / treeProjects.length) * Math.PI * 2 - Math.PI / 2
+              const lx = centerX + Math.cos(angle) * (radius + 22)
+              const ly = centerY + Math.sin(angle) * (radius + 18)
+              const isSel = selected === p.slug
+              return (
+                <text
+                  key={p.slug}
+                  x={lx}
+                  y={ly}
+                  textAnchor="middle"
+                  fill={isSel ? 'var(--fg)' : 'var(--fg-muted)'}
+                  fontSize="11"
+                  onClick={(e) => { e.stopPropagation(); setSelected(p.slug) }}
+                  className="cursor-pointer select-none hover:fill-[var(--fg)]"
+                >
+                  {p.title}
+                </text>
+              )
+            })}
+          </svg>
+        </div>
+
+        {selected && (
+          <div className="mb-6 p-4 border border-[var(--border)] bg-[var(--card-bg)] rounded text-sm max-w-prose">
+            Selected: <strong>{treeProjects.find(p => p.slug === selected)?.title}</strong>.
+            Click a node or the background to explore. Full details and images in the grid below.
+          </div>
+        )}
+
         <div className="gallery-grid mb-12">
           {treeProjects.map(p => (
-            <Link key={p.slug} to={`/tree/${p.slug}`} className="gallery-item group">
+            <Link key={p.slug} to={`/tree/${p.slug}`} className={`gallery-item group ${selected === p.slug ? 'ring-2 ring-[var(--fg)]' : ''}`}>
               <img src={p.images[0]} alt={p.title} loading="lazy" className="group-hover:scale-[1.02] transition" />
               <div className="absolute bottom-0 inset-x-0 p-3 bg-gradient-to-t from-black/75 text-white text-sm tracking-widest">{p.title}</div>
             </Link>
@@ -361,6 +495,25 @@ function Info() {
             {socialLinks.map(s => <a key={s.label} href={s.url} target="_blank" rel="noreferrer" className="hover:text-[var(--fg)]">{s.label}</a>)}
           </div>
           <div className="mt-8 text-xs opacity-60">This PWA can be installed for quick access and works offline for browsing credits and images.</div>
+        </div>
+
+        {/* Contact / collab form — replace action with your Formspree endpoint (free at formspree.io) */}
+        <div className="mt-10 border border-[var(--border)] p-6 rounded bg-[var(--card-bg)]">
+          <div className="font-medium mb-1">DM for collabs / ancestry notes</div>
+          <p className="text-sm text-[var(--fg-muted)] mb-4">Send a message. I'll get back to you.</p>
+          <form
+            action="https://formspree.io/f/REPLACE_WITH_YOUR_ID"
+            method="POST"
+            className="space-y-3"
+          >
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <input name="name" required placeholder="Name" className="bg-[var(--bg)] border border-[var(--border)] px-3 py-2 rounded text-sm" />
+              <input type="email" name="email" required placeholder="Email" className="bg-[var(--bg)] border border-[var(--border)] px-3 py-2 rounded text-sm" />
+            </div>
+            <textarea name="message" required rows={4} placeholder="Message or collab idea..." className="w-full bg-[var(--bg)] border border-[var(--border)] px-3 py-2 rounded text-sm"></textarea>
+            <button type="submit" className="px-5 py-2 text-sm border border-[var(--fg)] rounded hover:bg-[var(--fg)] hover:text-[var(--bg)] transition">Send</button>
+          </form>
+          <div className="text-[10px] mt-3 opacity-50">Form powered by Formspree (or swap for your preferred service). Update the action URL in the code.</div>
         </div>
 
         <div className="pt-8">
