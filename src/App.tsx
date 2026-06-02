@@ -1,11 +1,10 @@
 import { useState, useRef, useCallback } from 'react'
-import { Award, Users, TreePine, Mail, ExternalLink, Camera, Play, Pause } from 'lucide-react'
+import { ExternalLink, Camera, Play, Pause } from 'lucide-react'
 
 function App() {
-  const [activeSection, setActiveSection] = useState('home')
   const [isCameraOn, setIsCameraOn] = useState(false)
-  const [pixelSize, setPixelSize] = useState(6)
-  const [blurAmount, setBlurAmount] = useState(3)
+  const [pixelSize, setPixelSize] = useState(8)
+  const [blurAmount, setBlurAmount] = useState(2)
 
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -26,7 +25,7 @@ function App() {
       }
     } catch (err) {
       console.error(err)
-      alert("Camera access needed for live effect")
+      alert("Camera access needed for the live lens demo")
     }
   }
 
@@ -52,16 +51,16 @@ function App() {
     const draw = () => {
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
 
-      // Aito-style Pixelation
+      // Clean pixelation effect
       if (pixelSize > 1) {
-        const tempW = canvas.width / pixelSize
-        const tempH = canvas.height / pixelSize
+        const tempW = Math.floor(canvas.width / pixelSize)
+        const tempH = Math.floor(canvas.height / pixelSize)
         ctx.imageSmoothingEnabled = false
         ctx.drawImage(canvas, 0, 0, tempW, tempH)
         ctx.drawImage(canvas, 0, 0, tempW, tempH, 0, 0, canvas.width, canvas.height)
       }
 
-      // Blur
+      // Subtle blur
       if (blurAmount > 0) {
         ctx.filter = `blur(${blurAmount}px)`
         ctx.drawImage(canvas, 0, 0)
@@ -74,7 +73,6 @@ function App() {
     draw()
   }, [pixelSize, blurAmount])
 
-  // Projects from IMDb + your old site
   const projects = [
     { title: "Accident", year: "2017", role: "Camera / Tech", imdb: "https://www.imdb.com/title/tt5719706/" },
     { title: "A.C.O.D.", year: "2013", role: "Camera Department", imdb: "https://www.imdb.com/title/tt2416374/" },
@@ -83,129 +81,204 @@ function App() {
     { title: "Carter", year: "2009", role: "Camera" },
   ]
 
+  const scrollToSection = (section: string) => {
+    const el = document.getElementById(section)
+    if (el) {
+      const navHeight = 80
+      const y = el.getBoundingClientRect().top + window.scrollY - navHeight
+      window.scrollTo({ top: y, behavior: 'smooth' })
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }
+
   return (
-    <div className="min-h-screen bg-black text-white overflow-hidden">
-      <nav className="fixed top-0 z-50 w-full bg-black/90 backdrop-blur-lg border-b border-zinc-800">
-        <div className="max-w-6xl mx-auto px-8 py-5 flex justify-between items-center">
-          <div className="text-2xl font-light tracking-tighter">TAD ERICSON</div>
-          <div className="flex gap-8 text-sm uppercase tracking-widest">
-            {['home', 'work', 'awards', 'collective', 'tree', 'contact'].map(s => (
-              <button key={s} onClick={() => setActiveSection(s)} className={`hover:text-emerald-400 transition ${activeSection === s ? 'text-white' : 'text-zinc-400'}`}>
-                {s.toUpperCase()}
+    <div className="min-h-screen bg-white text-zinc-950">
+      {/* Clean elegant nav */}
+      <nav className="fixed top-0 z-50 w-full bg-white/95 backdrop-blur border-b border-zinc-200">
+        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div 
+            onClick={() => scrollToSection('home')}
+            className="text-xl font-light tracking-[-1px] cursor-pointer hover:text-zinc-500 transition"
+          >
+            TAD ERICSON
+          </div>
+          <div className="flex gap-7 text-sm uppercase tracking-[1.5px] text-zinc-500">
+            {['work', 'awards', 'collective', 'tree', 'contact'].map(s => (
+              <button 
+                key={s} 
+                onClick={() => scrollToSection(s)} 
+                className="hover:text-black transition"
+              >
+                {s}
               </button>
             ))}
           </div>
+          <a 
+            href="https://tadericson.com" 
+            target="_blank" 
+            className="text-xs tracking-widest text-zinc-400 hover:text-black flex items-center gap-1"
+          >
+            ORIG <ExternalLink size={13} />
+          </a>
         </div>
       </nav>
 
-      {/* LIVE GMUNK-INSPIRED HERO */}
-      <section className="relative h-screen flex items-center justify-center">
-        <canvas ref={canvasRef} className="absolute inset-0 w-full h-full object-cover opacity-75 scale-105" />
-        <video ref={videoRef} className="hidden" />
+      {/* CLEAN HERO with subtle live element */}
+      <section id="home" className="pt-20 pb-16 max-w-5xl mx-auto px-6">
+        <div className="text-center mb-12">
+          <div className="mx-auto mb-6 w-48 h-48 rounded-2xl overflow-hidden border border-zinc-200 shadow-sm">
+            <img 
+              src="https://picsum.photos/id/64/800/800" 
+              alt="Tad Ericson" 
+              className="w-full h-full object-cover" 
+            />
+          </div>
+          <h1 className="text-6xl md:text-7xl font-light tracking-[-3px] mb-3">Tad Ericson</h1>
+          <p className="text-xl text-zinc-500">Filmmaker • Camera • Fornever Collective • Oregon</p>
+          <p className="mt-3 text-sm text-zinc-400 max-w-xs mx-auto">DM for collabs. Working on deep ancestry research with elders.</p>
+        </div>
 
-        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/70 to-black" />
-
-        {/* Live Controls - Top Right */}
-        <div className="absolute top-28 right-8 z-20 bg-zinc-950/80 backdrop-blur-xl p-6 rounded-3xl border border-zinc-700 w-72">
-          <div className="flex items-center gap-3 mb-5">
-            <Camera className="w-5 h-5 text-emerald-400" />
-            <span className="uppercase text-xs tracking-[2px]">Live Lens Feed</span>
+        {/* Elegant Live Lens Demo - integrated cleanly */}
+        <div className="mt-8 border border-zinc-200 rounded-3xl p-8 bg-white shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <div className="uppercase text-xs tracking-[2px] text-emerald-600 mb-1">ARTISTIC STUDY</div>
+              <div className="text-2xl font-light">Live Pixel Lens</div>
+            </div>
+            <button 
+              onClick={isCameraOn ? stopLiveFeed : startLiveFeed}
+              className="flex items-center gap-2 px-5 py-2 text-sm border border-zinc-300 rounded-full hover:bg-zinc-50 active:bg-zinc-100 transition"
+            >
+              {isCameraOn ? (
+                <><Pause size={16} /> Stop Live Feed</>
+              ) : (
+                <><Play size={16} /> Activate Camera</>
+              )}
+            </button>
           </div>
 
-          <button
-            onClick={isCameraOn ? stopLiveFeed : startLiveFeed}
-            className="w-full py-4 rounded-2xl bg-white text-black font-medium flex items-center justify-center gap-3 hover:bg-zinc-200 mb-6"
-          >
-            {isCameraOn ? <><Pause className="w-5 h-5" /> Stop Feed</> : <><Play className="w-5 h-5" /> Activate Camera</>}
-          </button>
+          <div className="relative rounded-2xl overflow-hidden border border-zinc-100 bg-zinc-950">
+            <canvas 
+              ref={canvasRef} 
+              className="w-full aspect-video object-cover" 
+            />
+            <video ref={videoRef} className="hidden" />
+
+            {!isCameraOn && (
+              <div className="absolute inset-0 flex items-center justify-center bg-white/80 text-center p-8">
+                <div>
+                  <Camera className="mx-auto mb-3 text-emerald-600" size={32} />
+                  <p className="text-sm text-zinc-500">Real-time pixelation + blur demo.<br />Click above to start your webcam.</p>
+                </div>
+              </div>
+            )}
+          </div>
 
           {isCameraOn && (
-            <div className="space-y-6">
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
               <div>
-                <div className="text-xs text-zinc-400 mb-1">PIXELATE</div>
-                <input type="range" min="1" max="20" value={pixelSize} onChange={e => setPixelSize(+e.target.value)} className="w-full accent-emerald-400" />
+                <label className="block text-xs uppercase tracking-widest mb-1.5 text-zinc-400">Pixelation</label>
+                <input 
+                  type="range" min="1" max="18" step="1" 
+                  value={pixelSize} 
+                  onChange={e => setPixelSize(Number(e.target.value))} 
+                  className="w-full accent-emerald-600" 
+                />
+                <div className="text-right text-xs text-zinc-400 mt-0.5">{pixelSize}</div>
               </div>
               <div>
-                <div className="text-xs text-zinc-400 mb-1">BLUR</div>
-                <input type="range" min="0" max="15" value={blurAmount} onChange={e => setBlurAmount(+e.target.value)} className="w-full accent-emerald-400" />
+                <label className="block text-xs uppercase tracking-widest mb-1.5 text-zinc-400">Soft Blur</label>
+                <input 
+                  type="range" min="0" max="12" step="0.5" 
+                  value={blurAmount} 
+                  onChange={e => setBlurAmount(Number(e.target.value))} 
+                  className="w-full accent-emerald-600" 
+                />
+                <div className="text-right text-xs text-zinc-400 mt-0.5">{blurAmount}</div>
               </div>
             </div>
           )}
         </div>
+      </section>
 
-        {/* Center Content */}
-        <div className="relative z-10 text-center px-6 max-w-4xl">
-          <div className="mx-auto mb-8 w-56 h-56 rounded-3xl overflow-hidden border-4 border-white/30 shadow-2xl">
-            <img src="https://picsum.photos/id/64/800/800" alt="Tad" className="object-cover w-full h-full" />
-          </div>
-          <h1 className="text-7xl md:text-8xl font-light tracking-[-4px] mb-4">Tad Ericson</h1>
-          <p className="text-2xl text-zinc-300 mb-10">Filmmaker • Camera • Fornever Collective</p>
+      {/* WORK */}
+      <section id="work" className="border-t border-zinc-100 py-16 max-w-5xl mx-auto px-6">
+        <div className="uppercase tracking-[2px] text-xs text-emerald-600 mb-2">WORK</div>
+        <h2 className="text-4xl font-light tracking-tight mb-10">Selected Projects</h2>
+        
+        <div className="grid md:grid-cols-2 gap-x-8 gap-y-10">
+          {projects.map((p, i) => (
+            <div key={i} className="group">
+              <div className="font-light text-2xl mb-1">{p.title}</div>
+              <div className="text-sm text-zinc-500 mb-3">{p.year} • {p.role}</div>
+              {p.imdb && (
+                <a href={p.imdb} target="_blank" rel="noreferrer" 
+                   className="inline-flex items-center gap-1 text-sm text-emerald-600 hover:text-emerald-700">
+                  View on IMDb <ExternalLink size={14} />
+                </a>
+              )}
+            </div>
+          ))}
         </div>
       </section>
 
-      {/* WORK SECTION */}
-      {activeSection === 'work' && (
-        <section className="max-w-6xl mx-auto px-8 py-24">
-          <h2 className="text-6xl font-light mb-16">Selected Projects</h2>
-          <div className="grid md:grid-cols-2 gap-8">
-            {projects.map((p, i) => (
-              <div key={i} className="bg-zinc-900 p-10 rounded-3xl hover:bg-zinc-800 transition group">
-                <h3 className="text-4xl font-light">{p.title}</h3>
-                <p className="text-zinc-400 mt-2">{p.year} • {p.role}</p>
-                {p.imdb && (
-                  <a href={p.imdb} target="_blank" className="text-emerald-400 text-sm mt-6 inline-flex items-center gap-2 hover:underline">
-                    View on IMDb <ExternalLink className="w-4 h-4" />
-                  </a>
-                )}
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
       {/* AWARDS / CREDITS */}
-      {activeSection === 'awards' && (
-        <section className="max-w-6xl mx-auto px-8 py-24">
-          <h2 className="text-6xl font-light mb-16 flex items-center gap-4"><Award className="w-10 h-10" /> Credits & Recognition</h2>
-          <div className="prose prose-invert max-w-none text-lg text-zinc-300">
-            <p>Feature films, episodic TV, music videos, commercials for brands including VEVO, Pepsi, Nike, Tom Ford, and more.</p>
-            <p>Additional credits available on <a href="http://www.imdb.com/name/nm2460024/" target="_blank" className="text-emerald-400">IMDb</a>.</p>
+      <section id="awards" className="border-t border-zinc-100 py-16 max-w-5xl mx-auto px-6 bg-zinc-50">
+        <div className="uppercase tracking-[2px] text-xs text-emerald-600 mb-2">CREDITS</div>
+        <h2 className="text-4xl font-light tracking-tight mb-8">Selected Credits</h2>
+        
+        <div className="max-w-3xl text-[15px] leading-relaxed text-zinc-600 space-y-6">
+          <div>
+            <strong className="text-black">Feature Films</strong><br />
+            A.C.O.D. • Adult Children of Divorce • First Winter
           </div>
-        </section>
-      )}
+          <div>
+            <strong className="text-black">Episodic</strong><br />
+            Unbreakable Kimmy Schmidt • Smash • Borgia • Royal Pains • The Fuzz
+          </div>
+          <div>
+            <strong className="text-black">Music Videos & Commercials</strong><br />
+            Kanye West – Mercy • Tom Ford Noir • 55th GRAMMYs (PEPSI) • and many more for VEVO, Nike, Pennzoil, etc.
+          </div>
+        </div>
+        <a href="http://www.imdb.com/name/nm2460024/" target="_blank" className="mt-8 inline-block text-sm text-emerald-600 hover:underline">Full credits on IMDb →</a>
+      </section>
 
       {/* COLLECTIVE */}
-      {activeSection === 'collective' && (
-        <section className="max-w-6xl mx-auto px-8 py-24">
-          <h2 className="text-6xl font-light mb-16 flex items-center gap-4"><Users className="w-10 h-10" /> Fornever Collective</h2>
-          <p className="max-w-2xl text-xl text-zinc-300">Media & design in motion. Portland / Oregon based creative practice focused on film, VFX, and experimental work.</p>
-        </section>
-      )}
+      <section id="collective" className="border-t border-zinc-100 py-16 max-w-5xl mx-auto px-6">
+        <div className="uppercase tracking-[2px] text-xs text-emerald-600 mb-2">FORNEVER COLLECTIVE</div>
+        <h2 className="text-4xl font-light tracking-tight mb-6">Media & Design in Motion</h2>
+        <p className="max-w-2xl text-lg text-zinc-600">Creative practice based in Oregon. Film, VFX, experimental work, and personal research.</p>
+      </section>
 
-      {/* TREE / ANCESTRY */}
-      {activeSection === 'tree' && (
-        <section className="max-w-6xl mx-auto px-8 py-24">
-          <h2 className="text-6xl font-light mb-16 flex items-center gap-4"><TreePine className="w-10 h-10" /> Ancestry Research</h2>
-          <p className="max-w-prose text-xl text-zinc-300">Ongoing deep ancestry work with guidance from elders. Lines include First Nation, Powhatan, Lenapehoking, Roskelyn, Dunkeld, Hauteville, Lodbrock and more. Details expanding.</p>
-          <a href="https://tadericson.com/tree" target="_blank" className="mt-8 inline-block text-emerald-400">View original tree →</a>
-        </section>
-      )}
+      {/* TREE */}
+      <section id="tree" className="border-t border-zinc-100 py-16 max-w-5xl mx-auto px-6 bg-zinc-50">
+        <div className="uppercase tracking-[2px] text-xs text-emerald-600 mb-2">TREE</div>
+        <h2 className="text-4xl font-light tracking-tight mb-6">Ancestry Research</h2>
+        <p className="max-w-2xl text-lg text-zinc-600 mb-6">
+          Ongoing exploration of deep ancestry with guidance from elders around the world. 
+          Active lines include First Nation, Powhatan, Lenapehoking, Roskelyn, Dunkeld, Hauteville, and Lodbrock.
+        </p>
+        <a href="https://tadericson.com/tree" target="_blank" className="text-emerald-600 hover:underline text-sm">Explore the original tree archive →</a>
+      </section>
 
       {/* CONTACT */}
-      {activeSection === 'contact' && (
-        <section className="max-w-6xl mx-auto px-8 py-24">
-          <h2 className="text-6xl font-light mb-16 flex items-center gap-4"><Mail className="w-10 h-10" /> Contact</h2>
-          <div className="max-w-md">
-            <p className="text-xl mb-8 text-zinc-300">DM for collabs, ancestry notes, or camera work.</p>
-            <a href="https://www.linkedin.com/in/tadericson/" target="_blank" className="flex items-center gap-2 text-emerald-400 hover:underline">LinkedIn <ExternalLink /></a>
-            <a href="http://www.imdb.com/name/nm2460024/" target="_blank" className="flex items-center gap-2 text-emerald-400 hover:underline mt-2">IMDb <ExternalLink /></a>
-            <a href="https://vimeo.com/fornever" target="_blank" className="flex items-center gap-2 text-emerald-400 hover:underline mt-2">Vimeo <ExternalLink /></a>
-          </div>
-        </section>
-      )}
+      <section id="contact" className="border-t border-zinc-100 py-16 max-w-5xl mx-auto px-6">
+        <div className="uppercase tracking-[2px] text-xs text-emerald-600 mb-2">CONTACT</div>
+        <h2 className="text-4xl font-light tracking-tight mb-8">Let's talk</h2>
+        
+        <div className="flex flex-wrap gap-x-8 gap-y-2 text-lg">
+          <a href="https://www.linkedin.com/in/tadericson/" target="_blank" className="hover:text-emerald-600 flex items-center gap-2">LinkedIn <ExternalLink size={16} /></a>
+          <a href="http://www.imdb.com/name/nm2460024/" target="_blank" className="hover:text-emerald-600 flex items-center gap-2">IMDb <ExternalLink size={16} /></a>
+          <a href="https://vimeo.com/fornever" target="_blank" className="hover:text-emerald-600 flex items-center gap-2">Vimeo <ExternalLink size={16} /></a>
+          <a href="https://www.instagram.com/tadericson/" target="_blank" className="hover:text-emerald-600 flex items-center gap-2">Instagram <ExternalLink size={16} /></a>
+        </div>
+        <p className="mt-8 text-sm text-zinc-500">DMs open for collaborations and research notes.</p>
+      </section>
 
-      <footer className="py-12 text-center text-zinc-500 text-sm border-t border-zinc-900">
-        © 2026 Tad Ericson • <a href="https://github.com/fornevercollective" className="hover:text-white">Fornever Collective</a>
+      <footer className="py-10 text-center text-xs text-zinc-400 border-t border-zinc-100">
+        © 2026 Tad Ericson / Fornever Collective • All images copyright the artist
       </footer>
     </div>
   )
