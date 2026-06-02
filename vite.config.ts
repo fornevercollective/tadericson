@@ -22,7 +22,7 @@ export default defineConfig({
       manifest: {
         name: 'Tad Ericson',
         short_name: 'Tad Ericson',
-        description: 'Filmmaker • Camera Technician • Fornever Collective. Cinematic personal site with live lens.',
+        description: 'Tad Ericson — Filmmaker, Camera Technician, Fornever Collective. Cinematic PWA with live lens + code systems, AI tools, quantum experiments, ancestry research.',
         theme_color: '#111111',
         background_color: '#0a0a0a',
         display: 'standalone',
@@ -30,7 +30,7 @@ export default defineConfig({
         start_url: '/',
         orientation: 'any',
         lang: 'en',
-        categories: ['portfolio', 'personal', 'design', 'film', 'photography'],
+        categories: ['portfolio', 'personal', 'design', 'film', 'photography', 'technology'],
         shortcuts: [
           {
             name: 'Live Lens',
@@ -43,6 +43,12 @@ export default defineConfig({
             short_name: 'Ancestry',
             url: '/#tree',
             description: 'Ancestry research and lineages',
+          },
+          {
+            name: 'Code & Systems',
+            short_name: 'Code',
+            url: '/#code',
+            description: 'Current code world: AI editors, video tools, quantum, agentic systems',
           },
         ],
         icons: [
@@ -71,6 +77,11 @@ export default defineConfig({
       },
       devOptions: {
         enabled: true,
+      },
+      workbox: {
+        // Do not precache the large test video clips (they are for local dev testing of bg sources).
+        // This keeps the PWA SW small and first-load fast. The /videos/ are still served normally.
+        globIgnores: ['**/videos/**'],
       },
     }),
   ],

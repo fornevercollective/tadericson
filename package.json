@@ -10,7 +10,8 @@
     "dev:trace": "RUST_BACKTRACE=full vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "captions:server": "node transcribe-server.cjs"
   },
   "dependencies": {
     "lucide-react": "^1.17.0",

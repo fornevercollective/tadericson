@@ -2,9 +2,19 @@
 
 Dark, atmospheric site for Tad Ericson (filmmaker / camera technician / Fornever Collective).
 
-**Signature feature:** Live Lens — real-time webcam feed with controllable pixelation + blur (GMUNK / aito inspired) right in the hero.
+**Signature feature:** Live Lens — real-time webcam feed with controllable pixelation + blur (GMUNK / aito inspired). Controls now live in a left-top aito-style data panel. The lens is both the interactive signature and a metaphor for the capture/process/create practice.
 
 Fully installable Progressive Web App.
+
+**New research / daily driver mode (per latest direction):** 
+- Camera icon next to name in header.
+- Thin white search bar under header with left/right dropdowns for tools (LIVE LENS, Research Paper, Audio Notes, Sounding Board, Todos+Reminders, Portfolio) and quick external links (aito, overview, blank, original build chat).
+- Left pop-out drawer with the portrait + title (moved from center), chat links (grok share + fornevercollective + aito + overview + blank), and built-in tools for writing research papers, recording audio notes, sounding board for ideas/dev, and todos/weekly reminders (all persisted in localStorage).
+- Use the page as your cinematic hub + sounding board while the Live Lens runs.
+
+See COLLAB.md for the full executed spec and prior context.
+
+**Content direction:** Full port of legacy tadericson.com credits (film, TV, VEVO, motion graphics, brands) + living "code world" section that pulls in active Fornever Collective / qbit dev projects (aito AI editor, mustream video, Grok Notes, quantum composer, vwall, blank agent launcher, llm-lab, ancestory tools, etc.). The site itself participates in and reinforces the ongoing work.
 
 ## Quick Start
 
@@ -32,7 +42,7 @@ npm run preview
 
 ## Collaboration
 
-See [COLLAB.md](./COLLAB.md) for the live handoff between this terminal build environment and the grok.com superheavy planning chat.
+See [HANDOFF.md](./HANDOFF.md) (fresh restart snapshot + current evolved state) and [COLLAB.md](./COLLAB.md) (full historical thread) for handoff between this terminal environment and the grok.com superheavy planning chat. Start with HANDOFF.md when restarting a session.
 
 ## PWA
 
