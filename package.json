@@ -1,13 +1,15 @@
 {
   "name": "tadericson",
+  "version": "0.1.0",
   "private": true,
-  "version": "0.0.0",
   "type": "module",
+  "description": "tadericson.com — Progressive Web App personal site for Tad Ericson",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "pwa:build": "npm run build && echo 'PWA ready in dist/ (includes sw.js + manifest)'"
   },
   "dependencies": {
     "framer-motion": "^12.40.0",

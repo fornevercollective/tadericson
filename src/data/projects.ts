@@ -129,6 +129,10 @@ export const projects: Project[] = [
   { slug: '3d-renders', title: '3D Renders', category: '3d', images: ['https://cdn.myportfolio.com/a0bfb375047485c1e2494453e8c793bc/bca908b8e00393e830b5c4ed889a1cefbd47bc853837fafdd0cd4f85ec085419a671cd87a9b65af1_carw_202x158x32.jpg?h=138d7d82ca722897f485d3101b5e2c32'] },
   { slug: 'arc', title: 'ARC', category: '3d', images: ['https://cdn.myportfolio.com/a0bfb375047485c1e2494453e8c793bc/14fde351-9771-498e-af11-634fe63eba61_rwc_318x125x1192x934x32.jpg?h=c5afaf3650f7a1dbb73f6159df1276c2'] },
 
+  // 2D (stubs — expand with real work)
+  { slug: 'design-1', title: 'Design Explorations', category: '2d', images: ['https://cdn.myportfolio.com/a0bfb375047485c1e2494453e8c793bc/3a43963d-0a48-4eb6-8321-f05b7c7fcd7b_rwc_249x0x676x529x32.png?h=c67917de161c91bf3506dcae566324dd'] },
+  { slug: 'proposals', title: 'Proposals', category: '2d', images: ['https://cdn.myportfolio.com/a0bfb375047485c1e2494453e8c793bc/ea8ff8c5-f3dd-479d-85f9-99f2cee0ce6a_rwc_143x10x852x667x32.PNG?h=769eb575ed5716dd9a125d70463a3957'] },
+
   // TREE / Ancestry
   { slug: 'ancestry', title: 'Ancestry', category: 'tree', images: ['https://cdn.myportfolio.com/a0bfb375047485c1e2494453e8c793bc/cdc5625f-3c94-4bde-b2c7-8494d4279ac5_rwc_0x168x1004x784x32.PNG?h=0362cd3b8dd2e9de958099eb037311ab'] },
   { slug: 'firstnation', title: 'First Nation', category: 'tree', images: ['https://cdn.myportfolio.com/a0bfb375047485c1e2494453e8c793bc/dba25640-9a1c-4287-9e9a-fa5e2712ab91_carw_202x158x32.jpg?h=a7be81a40d4f26eac8712c6505975617'] },

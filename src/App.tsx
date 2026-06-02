@@ -303,16 +303,7 @@ function ThreeD() {
 }
 
 function TwoD() {
-  return (
-    <PageTransition>
-      <div className="pt-10">
-        <h1 className="section-header">2D</h1>
-        <p className="text-[var(--fg-muted)] max-w-prose">2D motion, design, and illustration work. Portfolio pieces and client projects will be added here.</p>
-        <div className="my-10 text-sm opacity-60">Coming in this PWA rebuild — check back or visit the <a className="underline" href="https://tadericson.com/2d" target="_blank">original</a>.</div>
-        <Link to="/" className="back-link"><ArrowLeft size={16}/> Home</Link>
-      </div>
-    </PageTransition>
-  )
+  return <SectionPage category="2d" title="2D" />
 }
 
 function Tree() {
