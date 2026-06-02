@@ -1,9 +1,11 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import { BrowserRouter } from 'react-router-dom'
+import { Toaster } from 'sonner'
 import './index.css'
 import App from './App.tsx'
 
-// PWA service worker auto-update (best effort)
+// PWA service worker auto-update + reload prompt (works with vite-plugin-pwa)
 const updateSW = async () => {
   if ('serviceWorker' in navigator) {
     try {
@@ -14,6 +16,7 @@ const updateSW = async () => {
           if (newWorker) {
             newWorker.addEventListener('statechange', () => {
               if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                // New content available
                 const doUpdate = window.confirm('New version of the site is available. Reload now?')
                 if (doUpdate) newWorker.postMessage({ type: 'SKIP_WAITING' })
               }
@@ -22,7 +25,7 @@ const updateSW = async () => {
         })
       }
     } catch {
-      // ignore
+      // ignore – best effort service worker update check
     }
   }
 }
@@ -30,6 +33,9 @@ updateSW()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <BrowserRouter basename={import.meta.env.BASE_URL}>
+      <App />
+      <Toaster position="top-center" richColors closeButton />
+    </BrowserRouter>
   </StrictMode>,
 )

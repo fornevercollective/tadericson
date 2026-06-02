@@ -1,493 +1,613 @@
-import { useState, useRef, useCallback, useEffect } from 'react'
-import { ExternalLink, Camera, Play, Pause } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Routes, Route, Link, useLocation, useParams, Navigate } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
+import { ArrowLeft, Menu, X, Download, ExternalLink, Sun, Moon } from 'lucide-react'
+import { toast } from 'sonner'
+import {
+  navSections,
+  homeIntro,
+  summaryCredits,
+  vevoCredits,
+  infoCredits,
+  getProjectsByCategory,
+  getProject,
+  socialLinks,
+  type Project,
+} from './data/projects'
 
-function App() {
-  const [isCameraOn, setIsCameraOn] = useState(false)
-  const [pixelSize, setPixelSize] = useState(8)
-  const [blurAmount, setBlurAmount] = useState(2)
+function useActivePath() {
+  const loc = useLocation()
+  return (path: string) => loc.pathname === path || (path !== '/' && loc.pathname.startsWith(path))
+}
 
-  const videoRef = useRef<HTMLVideoElement>(null)
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const streamRef = useRef<MediaStream | null>(null)
-  const animationRef = useRef<number | undefined>(undefined)
+function Nav() {
+  const [open, setOpen] = useState(false)
+  const isActive = useActivePath()
+  const loc = useLocation()
 
-  const startLiveFeed = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: 1280, height: 720, facingMode: "user" }
-      })
-      streamRef.current = stream
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream
-        await videoRef.current.play()
-        setIsCameraOn(true)
-        processFrame()
-      }
-    } catch (err) {
-      console.error(err)
-      alert("Camera access needed for the live lens demo")
-    }
-  }
-
-  const stopLiveFeed = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop())
-    }
-    if (animationRef.current != null) cancelAnimationFrame(animationRef.current)
-    setIsCameraOn(false)
-
-    // Clear the canvas so the static artistic bg shows through when off
-    if (canvasRef.current) {
-      const ctx = canvasRef.current.getContext('2d')
-      if (ctx) {
-        ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height)
-      }
-    }
-  }
-
-  const processFrame = useCallback(() => {
-    const video = videoRef.current
-    const canvas = canvasRef.current
-    if (!video || !canvas) return
-
-    const ctx = canvas.getContext('2d', { willReadFrequently: true })
-    if (!ctx) return
-
-    canvas.width = 1280
-    canvas.height = 720
-
-    const draw = () => {
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
-
-      // Clean pixelation effect
-      if (pixelSize > 1) {
-        const tempW = Math.floor(canvas.width / pixelSize)
-        const tempH = Math.floor(canvas.height / pixelSize)
-        ctx.imageSmoothingEnabled = false
-        ctx.drawImage(canvas, 0, 0, tempW, tempH)
-        ctx.drawImage(canvas, 0, 0, tempW, tempH, 0, 0, canvas.width, canvas.height)
-      }
-
-      // Subtle blur
-      if (blurAmount > 0) {
-        ctx.filter = `blur(${blurAmount}px)`
-        ctx.drawImage(canvas, 0, 0)
-        ctx.filter = 'none'
-      }
-
-      animationRef.current = requestAnimationFrame(draw)
-    }
-
-    draw()
-  }, [pixelSize, blurAmount])
-
-  // Video concept: Media rotator for high-res images/videos/gifs
-  // Controlled via in-browser "terminal server" for testing/deployment simulation
-  const [mediaItems, setMediaItems] = useState([
-    { id: 1, type: 'image', url: 'https://picsum.photos/id/1015/1920/1080', title: 'High Res Landscape' },
-    { id: 2, type: 'image', url: 'https://picsum.photos/id/160/1920/1080', title: 'Mountain Study' },
-    { id: 3, type: 'gif', url: 'https://media.giphy.com/media/3oEjI6SIIHBdRxz40w/giphy.gif', title: 'Abstract Motion' },
-    { id: 4, type: 'video', url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4', title: 'Elephants Dream (sample video)' },
-    { id: 5, type: 'image', url: 'https://picsum.photos/id/201/1920/1080', title: 'Urban Texture' },
-  ])
-  const [currentMediaIndex, setCurrentMediaIndex] = useState(0)
-  const [isRotating, setIsRotating] = useState(false)
-  const [rotationInterval, setRotationInterval] = useState(4000)
-  const [terminalLines, setTerminalLines] = useState([
-    '[TERMINAL SERVER v0.1] Small media rotator server activated.',
-    'Type "help" for available commands. For local testing: run "npm run rotator-server" in terminal.',
-    'High-res media rotation ready. Add your files via "add <url>".'
-  ])
-  const [terminalInput, setTerminalInput] = useState('')
-  const rotatorTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
-
-  // Rotation timer
-  useEffect(() => {
-    if (rotatorTimerRef.current) {
-      clearInterval(rotatorTimerRef.current)
-      rotatorTimerRef.current = null
-    }
-    if (isRotating && mediaItems.length > 0) {
-      rotatorTimerRef.current = setInterval(() => {
-        setCurrentMediaIndex((prev) => (prev + 1) % mediaItems.length)
-      }, rotationInterval)
-    }
-    return () => {
-      if (rotatorTimerRef.current) clearInterval(rotatorTimerRef.current)
-    }
-  }, [isRotating, rotationInterval, mediaItems.length])
-
-  const currentMedia = mediaItems[currentMediaIndex] || mediaItems[0]
-
-  const executeTerminalCommand = (rawCmd: string) => {
-    const cmd = rawCmd.trim()
-    if (!cmd) return
-
-    const parts = cmd.toLowerCase().split(/\s+/)
-    const command = parts[0]
-    let output = `> ${cmd}`
-
-    switch (command) {
-      case 'help':
-        output += '\nAvailable commands:\n  next / prev\n  play / pause\n  speed <ms>\n  list\n  status\n  add <url> [image|video|gif]\n  activate / server  (start small terminal server simulation)\n  deploy  (deploy rotator to local server for testing)\n  clear'
-        break
-      case 'next':
-        setCurrentMediaIndex(i => (i + 1) % mediaItems.length)
-        output += '\nNext media loaded.'
-        break
-      case 'prev':
-        setCurrentMediaIndex(i => (i - 1 + mediaItems.length) % mediaItems.length)
-        output += '\nPrevious media loaded.'
-        break
-      case 'play':
-        setIsRotating(true)
-        output += '\nRotation activated.'
-        break
-      case 'pause':
-        setIsRotating(false)
-        output += '\nRotation paused.'
-        break
-      case 'speed': {
-        const ms = parseInt(parts[1])
-        if (ms >= 1000) {
-          setRotationInterval(ms)
-          output += `\nRotation interval set to ${ms}ms.`
-        } else {
-          output += '\nMinimum speed 1000ms.'
-        }
-        break
-      }
-      case 'list':
-        output += '\n' + mediaItems.map((m, i) => `  ${i}: [${m.type}] ${m.title}`).join('\n')
-        break
-      case 'status':
-        output += `\nIndex: ${currentMediaIndex} | Rotating: ${isRotating} | Interval: ${rotationInterval}ms | Items: ${mediaItems.length}`
-        break
-      case 'add': {
-        if (parts[1]) {
-          const url = parts[1]
-          const type = parts[2] || 'image'
-          const newItem = { id: Date.now(), type, url, title: url.split('/').pop() || 'Custom Media' }
-          setMediaItems(prev => [...prev, newItem])
-          output += `\nAdded ${type}: ${url} (session only; for persistent add to media list in code)`
-        } else {
-          output += '\nUsage: add <url> [image|video|gif]'
-        }
-        break
-      }
-      case 'activate':
-      case 'server':
-        output += '\n[TERMINAL SERVER] Activating small terminal server...'
-        output += '\n[SERVER] localhost:8080 ready for media rotation.'
-        output += '\n[SERVER] High-res images/videos/gifs will cycle here.'
-        output += '\n[SERVER] Use "deploy" to test deployment from this build.'
-        setIsRotating(true)
-        break
-      case 'deploy':
-        output += '\n[DEPLOY] Packaging current rotator for local server...'
-        output += '\n[DEPLOY] Deployed to terminal server. Test at http://localhost:8080 (run npm run rotator-server in your terminal for real local server).'
-        output += '\n[DEPLOY] For high-res: place files in public/media/ and update list or use "add".'
-        break
-      case 'clear':
-        setTerminalLines(['[TERMINAL SERVER] Output cleared.'])
-        setTerminalInput('')
-        return
-      default:
-        output += '\nUnknown command. Type "help".'
-    }
-
-    setTerminalLines(prev => [...prev.slice(-12), output]) // keep recent
-  }
-
-  const handleTerminalSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (terminalInput.trim()) {
-      executeTerminalCommand(terminalInput)
-      setTerminalInput('')
-    }
-  }
-
-  const projects = [
-    { title: "Accident", year: "2017", role: "Camera / Tech", imdb: "https://www.imdb.com/title/tt5719706/" },
-    { title: "A.C.O.D.", year: "2013", role: "Camera Department", imdb: "https://www.imdb.com/title/tt2416374/" },
-    { title: "YogaSlackers - Slackasana", year: "2010", role: "Camera / Production" },
-    { title: "First Winter", year: "", role: "Camera" },
-    { title: "Carter", year: "2009", role: "Camera" },
-  ]
-
-  const scrollToSection = (section: string) => {
-    const el = document.getElementById(section)
-    if (el) {
-      const navHeight = 80
-      const y = el.getBoundingClientRect().top + window.scrollY - navHeight
-      window.scrollTo({ top: y, behavior: 'smooth' })
-    } else {
-      window.scrollTo({ top: 0, behavior: 'smooth' })
-    }
-  }
+  // Close mobile nav on route change.
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional UI reset on navigation
+  useEffect(() => { setOpen(false) }, [loc.pathname])
 
   return (
-    <div className="min-h-screen bg-white text-zinc-950">
-      {/* Clean elegant nav */}
-      <nav className="fixed top-0 z-50 w-full bg-white/95 backdrop-blur border-b border-zinc-200">
-        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div 
-            onClick={() => scrollToSection('home')}
-            className="text-xl font-light tracking-[-1px] cursor-pointer hover:text-zinc-500 transition"
-          >
-            TAD ERICSON
-          </div>
-          <div className="flex gap-7 text-sm uppercase tracking-[1.5px] text-zinc-500">
-            {['work', 'awards', 'collective', 'tree', 'video', 'contact'].map(s => (
-              <button 
-                key={s} 
-                onClick={() => scrollToSection(s)} 
-                className="hover:text-black transition"
-              >
-                {s}
-              </button>
-            ))}
-          </div>
-          <a 
-            href="https://tadericson.com" 
-            target="_blank" 
-            className="text-xs tracking-widest text-zinc-400 hover:text-black flex items-center gap-1"
-          >
-            ORIG <ExternalLink size={13} />
+    <nav className="sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--nav-bg)] backdrop-blur">
+      <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
+        <Link to="/" className="font-semibold tracking-[2px] text-lg">TAD ERICSON</Link>
+
+        {/* Desktop nav */}
+        <div className="hidden md:flex items-center gap-6 text-sm tracking-[1px] uppercase">
+          {navSections.map(s => (
+            <Link
+              key={s.path}
+              to={s.path}
+              className={`nav-link ${isActive(s.path) ? 'active font-medium' : 'opacity-70 hover:opacity-100'}`}
+            >
+              {s.label}
+            </Link>
+          ))}
+          <a href="https://tadericson.com" target="_blank" rel="noreferrer" className="opacity-60 hover:opacity-100 flex items-center gap-1">
+            ORIG <ExternalLink size={14} />
           </a>
         </div>
-      </nav>
 
-      {/* HERO with Live Camera + GMUNK-style processed background as full artistic bg */}
-      <section id="home" className="relative h-screen flex items-center justify-center overflow-hidden">
-        {/* Static artistic background fallback (when camera off) */}
-        <div 
-          className="absolute inset-0 bg-cover bg-center" 
-          style={{ backgroundImage: `url(https://picsum.photos/id/1015/1920/1080)` }} 
-        />
-
-        {/* The processed live camera feed as the background (GMUNK pixel + blur style) - only active when camera on */}
-        <canvas 
-          ref={canvasRef} 
-          className="absolute inset-0 w-full h-full object-cover opacity-80 scale-105" 
-        />
-        <video ref={videoRef} className="hidden" />
-
-        {/* Gradient overlay for readability over the processed bg */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/70 to-black" />
-
-        {/* Live Controls - off to the right side of the screen */}
-        <div className="absolute top-28 right-8 z-30 bg-zinc-950/80 backdrop-blur-xl p-6 rounded-3xl border border-zinc-700 w-72">
-          <div className="flex items-center gap-3 mb-5">
-            <Camera className="w-5 h-5 text-emerald-400" />
-            <span className="uppercase text-xs tracking-[2px]">Live Lens Feed</span>
-          </div>
-
+        <div className="flex items-center gap-3">
+          <PWAInstallButton />
+          <ThemeToggle />
           <button
-            onClick={isCameraOn ? stopLiveFeed : startLiveFeed}
-            className="w-full py-4 rounded-2xl bg-white text-black font-medium flex items-center justify-center gap-3 hover:bg-zinc-200 mb-6"
+            onClick={() => setOpen(!open)}
+            className="md:hidden p-2 -mr-2"
+            aria-label="Toggle menu"
           >
-            {isCameraOn ? (
-              <><Pause className="w-5 h-5" /> Stop Feed</>
-            ) : (
-              <><Play className="w-5 h-5" /> Activate Camera</>
-            )}
+            {open ? <X size={20} /> : <Menu size={20} />}
           </button>
-
-          {isCameraOn && (
-            <div className="space-y-6">
-              <div>
-                <div className="text-xs text-zinc-400 mb-1">PIXELATE</div>
-                <input 
-                  type="range" min="1" max="20" value={pixelSize} 
-                  onChange={e => setPixelSize(+e.target.value)} 
-                  className="w-full accent-emerald-400" 
-                />
-              </div>
-              <div>
-                <div className="text-xs text-zinc-400 mb-1">BLUR</div>
-                <input 
-                  type="range" min="0" max="15" value={blurAmount} 
-                  onChange={e => setBlurAmount(+e.target.value)} 
-                  className="w-full accent-emerald-400" 
-                />
-              </div>
-            </div>
-          )}
         </div>
+      </div>
 
-        {/* Center Content - restored / synced with the clean aesthetic and original content */}
-        <div className="relative z-20 text-center px-6 max-w-4xl">
-          <div className="mx-auto mb-8 w-56 h-56 rounded-3xl overflow-hidden border-4 border-white/30 shadow-2xl">
-            <img 
-              src="https://picsum.photos/id/64/800/800" 
-              alt="Tad Ericson" 
-              className="object-cover w-full h-full" 
-            />
+      {/* Mobile nav */}
+      {open && (
+        <div className="md:hidden border-t border-[var(--border)] bg-[var(--bg)] px-4 py-4 text-sm tracking-widest uppercase">
+          {navSections.map(s => (
+            <Link key={s.path} to={s.path} className={`block py-2 ${isActive(s.path) ? 'font-medium' : 'opacity-70'}`}>
+              {s.label}
+            </Link>
+          ))}
+          <a href="https://tadericson.com" target="_blank" rel="noreferrer" className="block py-2 opacity-60">ORIGINAL SITE →</a>
+          <div className="pt-3 mt-2 border-t border-[var(--border)] flex items-center justify-between text-xs normal-case tracking-normal">
+            <span className="opacity-70">Theme</span>
+            <ThemeToggle />
           </div>
-          <h1 className="text-7xl md:text-8xl font-light tracking-[-4px] mb-4 text-white">Tad Ericson</h1>
-          <p className="text-2xl text-zinc-300 mb-10">Filmmaker • Camera • Fornever Collective</p>
-          <p className="text-sm text-zinc-400 max-w-xs mx-auto">DM for collabs. Working on deep ancestry research with elders of the world.</p>
         </div>
-      </section>
+      )}
+    </nav>
+  )
+}
 
-      {/* WORK */}
-      <section id="work" className="border-t border-zinc-100 py-16 max-w-5xl mx-auto px-6">
-        <div className="uppercase tracking-[2px] text-xs text-emerald-600 mb-2">WORK</div>
-        <h2 className="text-4xl font-light tracking-tight mb-10">Selected Projects</h2>
-        
-        <div className="grid md:grid-cols-2 gap-x-8 gap-y-10">
-          {projects.map((p, i) => (
-            <div key={i} className="group">
-              <div className="font-light text-2xl mb-1">{p.title}</div>
-              <div className="text-sm text-zinc-500 mb-3">{p.year} • {p.role}</div>
-              {p.imdb && (
-                <a href={p.imdb} target="_blank" rel="noreferrer" 
-                   className="inline-flex items-center gap-1 text-sm text-emerald-600 hover:text-emerald-700">
-                  View on IMDb <ExternalLink size={14} />
-                </a>
+// Minimal type for the beforeinstallprompt event (PWA install prompt)
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform?: string }>
+}
+
+// Augment the DOM lib so addEventListener accepts the event name with proper type (no any casts needed)
+declare global {
+  interface WindowEventMap {
+    beforeinstallprompt: BeforeInstallPromptEvent
+  }
+}
+
+function PWAInstallButton() {
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null)
+  const [installed, setInstalled] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false
+    return window.matchMedia('(display-mode: standalone)').matches
+  })
+
+  useEffect(() => {
+    const handler = (e: BeforeInstallPromptEvent) => {
+      e.preventDefault()
+      setDeferredPrompt(e)
+    }
+    window.addEventListener('beforeinstallprompt', handler)
+    return () => window.removeEventListener('beforeinstallprompt', handler)
+  }, [])
+
+  const handleInstall = async () => {
+    if (!deferredPrompt) {
+      toast.info('Use your browser menu to install (Add to Home Screen).')
+      return
+    }
+    deferredPrompt.prompt()
+    const { outcome } = await deferredPrompt.userChoice
+    if (outcome === 'accepted') {
+      toast.success('Thanks! Tad Ericson PWA installed.')
+      setInstalled(true)
+    }
+    setDeferredPrompt(null)
+  }
+
+  if (installed) return null
+
+  return (
+    <button
+      onClick={handleInstall}
+      className="flex items-center gap-1.5 text-xs uppercase tracking-widest px-3 py-1.5 rounded-full border border-[var(--border)] hover:bg-[var(--card-bg)] transition"
+      title="Install PWA"
+    >
+      <Download size={14} /> INSTALL
+    </button>
+  )
+}
+
+function ThemeToggle() {
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    if (typeof window === 'undefined') return 'light'
+    const stored = localStorage.getItem('theme') as 'light' | 'dark' | null
+    if (stored) return stored
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  })
+
+  // Apply class as a side effect only (avoids set-state-in-effect lint rule)
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', theme === 'dark')
+  }, [theme])
+
+  const toggle = () => {
+    const next: 'light' | 'dark' = theme === 'light' ? 'dark' : 'light'
+    setTheme(next)
+    localStorage.setItem('theme', next)
+    // DOM update also happens via the effect above
+  }
+
+  const isDark = theme === 'dark'
+  return (
+    <button
+      onClick={toggle}
+      className="p-2 rounded-full border border-[var(--border)] hover:bg-[var(--card-bg)] transition flex items-center justify-center"
+      aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+      title="Toggle theme"
+    >
+      {isDark ? <Sun size={16} /> : <Moon size={16} />}
+    </button>
+  )
+}
+
+function Layout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="min-h-screen flex flex-col">
+      <Nav />
+      <main className="flex-1 max-w-5xl mx-auto w-full px-4 pb-20">
+        <AnimatePresence mode="wait">
+          {children}
+        </AnimatePresence>
+      </main>
+      <Footer />
+    </div>
+  )
+}
+
+function PageTransition({ children }: { children: React.ReactNode }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -6 }}
+      transition={{ duration: 0.18, ease: 'easeOut' }}
+    >
+      {children}
+    </motion.div>
+  )
+}
+
+function Footer() {
+  return (
+    <footer className="border-t border-[var(--border)] py-10 text-xs text-[var(--fg-muted)]">
+      <div className="max-w-5xl mx-auto px-4 flex flex-col md:flex-row gap-y-4 items-center justify-between">
+        <div>
+          © {new Date().getFullYear()} Fornever Collective — All images © Tad Ericson. Rebuilt as PWA.
+        </div>
+        <div className="flex gap-4">
+          {socialLinks.map(s => (
+            <a key={s.label} href={s.url} target="_blank" rel="noreferrer" className="hover:text-[var(--fg)]">{s.label}</a>
+          ))}
+          <a href="https://github.com/fornevercollective/tadericson" target="_blank" rel="noreferrer" className="hover:text-[var(--fg)] inline-flex items-center gap-1">Source <ExternalLink size={13}/></a>
+        </div>
+        <div className="text-[10px] opacity-60">PWA • Offline capable • Installable</div>
+      </div>
+    </footer>
+  )
+}
+
+function Home() {
+  return (
+    <PageTransition>
+      <div className="pt-12 pb-8">
+        <div className="text-center mb-12">
+          <div className="uppercase tracking-[4px] text-xs text-[var(--fg-muted)] mb-2">OREGON USA</div>
+          <h1 className="text-6xl md:text-7xl tracking-[-3.2px] font-semibold mb-2">TAD ERICSON</h1>
+          <p className="text-lg text-[var(--fg-muted)]">DM for COLABs</p>
+        </div>
+
+        <div className="max-w-2xl mx-auto text-center mb-12 text-[15px] leading-relaxed text-[var(--fg-muted)]">
+          VFX artist, motion designer, and creative technologist. Credits span feature films, episodic television, music videos, commercials, and motion graphics for major brands.
+          <div className="mt-4">
+            Currently deep in <Link to="/tree" className="underline">ancestry research</Link> with guidance from elders around the world.
+          </div>
+        </div>
+
+        {/* Quick nav tiles */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-16">
+          {navSections.map(s => (
+            <Link
+              key={s.path}
+              to={s.path}
+              className="group border border-[var(--border)] hover:border-[var(--fg)] px-5 py-4 rounded flex items-center justify-between text-sm uppercase tracking-widest transition"
+            >
+              {s.label}
+              <span className="opacity-40 group-hover:opacity-70">→</span>
+            </Link>
+          ))}
+        </div>
+
+        {/* Summary credits */}
+        <div className="mb-16">
+          <h2 className="section-header">SELECTED CREDITS</h2>
+          <div className="grid md:grid-cols-2 gap-x-12 gap-y-8 credit-list">
+            {summaryCredits.map(group => (
+              <div key={group.title}>
+                <div className="font-medium mb-1.5 tracking-wide text-sm text-[var(--fg-muted)]">{group.title}</div>
+                <ul className="space-y-px">
+                  {group.items.map((item, i) => <li key={i}>• {item}</li>)}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Ancestry teaser */}
+        <div className="border border-[var(--border)] bg-[var(--card-bg)] p-8 md:p-10 rounded mb-10">
+          <div className="uppercase text-xs tracking-[2px] mb-2 text-[var(--fg-muted)]">TREE</div>
+          <div className="text-2xl tracking-tight mb-3">Ancestry Research</div>
+          <p className="text-[var(--fg-muted)] mb-6 max-w-prose">{homeIntro.ancestryNote}</p>
+          <Link to="/tree" className="inline-block text-sm border-b border-[var(--fg)] pb-px hover:border-[var(--accent-2)]">Explore the lines →</Link>
+        </div>
+
+        <div className="text-center text-xs opacity-50 pt-8">This is a progressive web app rebuild of tadericson.com. Works offline after first load.</div>
+      </div>
+    </PageTransition>
+  )
+}
+
+function SectionPage({ category, title, extraCredits }: { category: Project['category']; title: string; extraCredits?: React.ReactNode }) {
+  const allProjs = getProjectsByCategory(category)
+  const [query, setQuery] = useState('')
+  const projs = query
+    ? allProjs.filter(p => p.title.toLowerCase().includes(query.toLowerCase()) || (p.description || '').toLowerCase().includes(query.toLowerCase()))
+    : allProjs
+
+  return (
+    <PageTransition>
+      <div className="pt-10">
+        <div className="flex items-baseline justify-between mb-1">
+          <h1 className="section-header !mb-0 flex-1">{title}</h1>
+          <Link to="/" className="text-xs opacity-60 hover:opacity-100 hidden md:block">BACK TO HOME</Link>
+        </div>
+
+        {allProjs.length > 0 && (
+          <>
+            <div className="mb-4 flex items-center gap-3">
+              <input
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={`Search ${title.toLowerCase()}...`}
+                className="flex-1 max-w-sm bg-[var(--card-bg)] border border-[var(--border)] rounded px-3 py-2 text-sm focus:outline-none focus:border-[var(--fg)]"
+              />
+              {query && <button onClick={() => setQuery('')} className="text-xs opacity-60 hover:opacity-100">clear</button>}
+            </div>
+            <p className="text-sm text-[var(--fg-muted)] mb-6">Click any image for details. Images cached for offline viewing.</p>
+            <div className="gallery-grid mb-12">
+              {projs.length > 0 ? (
+                projs.map(p => (
+                  <Link key={p.slug} to={`/${p.category}/${p.slug}`} className="gallery-item group">
+                    <img
+                      src={p.images[0]}
+                      alt={p.title}
+                      loading="lazy"
+                      className="group-hover:scale-[1.03] transition-transform duration-300"
+                    />
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3 text-white text-sm font-medium tracking-wide">
+                      {p.title} {p.year && <span className="opacity-70">· {p.year}</span>}
+                    </div>
+                  </Link>
+                ))
+              ) : (
+                <div className="col-span-full text-center py-8 text-[var(--fg-muted)]">No matches for “{query}”.</div>
               )}
+            </div>
+          </>
+        )}
+
+        {extraCredits}
+
+        <div className="pt-4">
+          <Link to="/" className="back-link"><ArrowLeft size={16}/> Home</Link>
+        </div>
+      </div>
+    </PageTransition>
+  )
+}
+
+function TV() {
+  return <SectionPage category="tv" title="TV" />
+}
+
+function Film() {
+  return <SectionPage category="film" title="FILM" />
+}
+
+function Vevo() {
+  return (
+    <SectionPage
+      category="vevo"
+      title="VEVO & MUSIC"
+      extraCredits={
+        <div className="mb-12">
+          <h2 className="text-sm tracking-[1.5px] uppercase text-[var(--fg-muted)] mb-4">Selected Clients & Projects</h2>
+          <div className="grid md:grid-cols-2 gap-x-10 gap-y-8 credit-list">
+            {vevoCredits.map(g => (
+              <div key={g.title}>
+                <div className="font-medium mb-1 tracking-wider text-sm">{g.title}</div>
+                <div className="text-[var(--fg-muted)]">{g.items.join(' • ')}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      }
+    />
+  )
+}
+
+function ThreeD() {
+  return <SectionPage category="3d" title="3D" />
+}
+
+function TwoD() {
+  return <SectionPage category="2d" title="2D" />
+}
+
+function Tree() {
+  const treeProjects = getProjectsByCategory('tree')
+  const [selected, setSelected] = useState<string | null>(null)
+
+  // Simple radial tree visualization (inspired by spatial/mapping patterns in related qbitOS work)
+  const centerX = 200
+  const centerY = 140
+  const radius = 95
+
+  return (
+    <PageTransition>
+      <div className="pt-10">
+        <h1 className="section-header">TREE — Ancestry</h1>
+        <div className="max-w-prose text-[var(--fg-muted)] mb-4">
+          Ongoing personal research into deep ancestry, guided by elders and primary records.
+          Lines currently under active exploration:
+        </div>
+
+        {/* Interactive radial tree / map */}
+        <div className="mb-8 flex justify-center">
+          <svg
+            width="420"
+            height="290"
+            viewBox="0 0 420 290"
+            className="border border-[var(--border)] bg-[var(--card-bg)] rounded cursor-pointer"
+            onClick={() => setSelected(null)}
+          >
+            {/* connections */}
+            {treeProjects.map((p, i) => {
+              const angle = (i / treeProjects.length) * Math.PI * 2 - Math.PI / 2
+              const x = centerX + Math.cos(angle) * radius
+              const y = centerY + Math.sin(angle) * radius
+              const isSel = selected === p.slug
+              return (
+                <g key={p.slug}>
+                  <line
+                    x1={centerX}
+                    y1={centerY}
+                    x2={x}
+                    y2={y}
+                    stroke={isSel ? 'var(--fg)' : 'var(--border)'}
+                    strokeWidth={isSel ? 2 : 1}
+                  />
+                  <circle
+                    cx={x}
+                    cy={y}
+                    r={isSel ? 7 : 5}
+                    fill={isSel ? 'var(--fg)' : 'var(--bg)'}
+                    stroke="var(--fg)"
+                    strokeWidth="1.5"
+                    onClick={(e) => { e.stopPropagation(); setSelected(p.slug) }}
+                    className="hover:stroke-[var(--accent)]"
+                  />
+                </g>
+              )
+            })}
+            {/* center node */}
+            <circle cx={centerX} cy={centerY} r="11" fill="var(--fg)" />
+            <text x={centerX} y={centerY + 4} textAnchor="middle" fill="var(--bg)" fontSize="10" fontWeight="600">TAD</text>
+
+            {/* labels */}
+            {treeProjects.map((p, i) => {
+              const angle = (i / treeProjects.length) * Math.PI * 2 - Math.PI / 2
+              const lx = centerX + Math.cos(angle) * (radius + 22)
+              const ly = centerY + Math.sin(angle) * (radius + 18)
+              const isSel = selected === p.slug
+              return (
+                <text
+                  key={p.slug}
+                  x={lx}
+                  y={ly}
+                  textAnchor="middle"
+                  fill={isSel ? 'var(--fg)' : 'var(--fg-muted)'}
+                  fontSize="11"
+                  onClick={(e) => { e.stopPropagation(); setSelected(p.slug) }}
+                  className="cursor-pointer select-none hover:fill-[var(--fg)]"
+                >
+                  {p.title}
+                </text>
+              )
+            })}
+          </svg>
+        </div>
+
+        {selected && (
+          <div className="mb-6 p-4 border border-[var(--border)] bg-[var(--card-bg)] rounded text-sm max-w-prose">
+            Selected: <strong>{treeProjects.find(p => p.slug === selected)?.title}</strong>.
+            Click a node or the background to explore. Full details and images in the grid below.
+          </div>
+        )}
+
+        <div className="gallery-grid mb-12">
+          {treeProjects.map(p => (
+            <Link key={p.slug} to={`/tree/${p.slug}`} className={`gallery-item group ${selected === p.slug ? 'ring-2 ring-[var(--fg)]' : ''}`}>
+              <img src={p.images[0]} alt={p.title} loading="lazy" className="group-hover:scale-[1.02] transition" />
+              <div className="absolute bottom-0 inset-x-0 p-3 bg-gradient-to-t from-black/75 text-white text-sm tracking-widest">{p.title}</div>
+            </Link>
+          ))}
+        </div>
+
+        <div className="prose prose-sm max-w-none text-[var(--fg-muted)] mb-12">
+          <p>More detailed family histories, documents, and DNA notes will live here as the research expands.</p>
+          <p className="text-xs mt-3">All images and stories © Tad Ericson / Fornever Collective.</p>
+        </div>
+
+        <Link to="/" className="back-link"><ArrowLeft size={16}/> Home</Link>
+      </div>
+    </PageTransition>
+  )
+}
+
+function Info() {
+  return (
+    <PageTransition>
+      <div className="pt-10 max-w-3xl">
+        <h1 className="section-header">INFO</h1>
+        <p className="mb-8 text-[var(--fg-muted)]">Multi-sector companies and collaborators I have had the privilege of working with.</p>
+
+        <div className="grid md:grid-cols-2 gap-x-10 gap-y-10 credit-list mb-14">
+          {infoCredits.map(g => (
+            <div key={g.title}>
+              <div className="font-semibold tracking-wider mb-2 text-sm">{g.title}</div>
+              <ul className="space-y-1 text-[var(--fg-muted)]">
+                {g.items.map((it, idx) => <li key={idx}>• {it}</li>)}
+              </ul>
             </div>
           ))}
         </div>
-      </section>
 
-      {/* AWARDS / CREDITS */}
-      <section id="awards" className="border-t border-zinc-100 py-16 max-w-5xl mx-auto px-6 bg-zinc-50">
-        <div className="uppercase tracking-[2px] text-xs text-emerald-600 mb-2">CREDITS</div>
-        <h2 className="text-4xl font-light tracking-tight mb-8">Selected Credits</h2>
-        
-        <div className="max-w-3xl text-[15px] leading-relaxed text-zinc-600 space-y-6">
-          <div>
-            <strong className="text-black">Feature Films</strong><br />
-            A.C.O.D. • Adult Children of Divorce • First Winter
+        <div className="border-t border-[var(--border)] pt-8 text-sm">
+          <div className="mb-2 font-medium">Connect</div>
+          <div className="flex flex-wrap gap-x-5 gap-y-1 text-[var(--fg-muted)]">
+            {socialLinks.map(s => <a key={s.label} href={s.url} target="_blank" rel="noreferrer" className="hover:text-[var(--fg)]">{s.label}</a>)}
           </div>
-          <div>
-            <strong className="text-black">Episodic</strong><br />
-            Unbreakable Kimmy Schmidt • Smash • Borgia • Royal Pains • The Fuzz
-          </div>
-          <div>
-            <strong className="text-black">Music Videos & Commercials</strong><br />
-            Kanye West – Mercy • Tom Ford Noir • 55th GRAMMYs (PEPSI) • and many more for VEVO, Nike, Pennzoil, etc.
-          </div>
-        </div>
-        <a href="http://www.imdb.com/name/nm2460024/" target="_blank" className="mt-8 inline-block text-sm text-emerald-600 hover:underline">Full credits on IMDb →</a>
-      </section>
-
-      {/* COLLECTIVE */}
-      <section id="collective" className="border-t border-zinc-100 py-16 max-w-5xl mx-auto px-6">
-        <div className="uppercase tracking-[2px] text-xs text-emerald-600 mb-2">FORNEVER COLLECTIVE</div>
-        <h2 className="text-4xl font-light tracking-tight mb-6">Media & Design in Motion</h2>
-        <p className="max-w-2xl text-lg text-zinc-600">Creative practice based in Oregon. Film, VFX, experimental work, and personal research.</p>
-      </section>
-
-      {/* TREE */}
-      <section id="tree" className="border-t border-zinc-100 py-16 max-w-5xl mx-auto px-6 bg-zinc-50">
-        <div className="uppercase tracking-[2px] text-xs text-emerald-600 mb-2">TREE</div>
-        <h2 className="text-4xl font-light tracking-tight mb-6">Ancestry Research</h2>
-        <p className="max-w-2xl text-lg text-zinc-600 mb-6">
-          Ongoing exploration of deep ancestry with guidance from elders around the world. 
-          Active lines include First Nation, Powhatan, Lenapehoking, Roskelyn, Dunkeld, Hauteville, and Lodbrock.
-        </p>
-        <a href="https://tadericson.com/tree" target="_blank" className="text-emerald-600 hover:underline text-sm">Explore the original tree archive →</a>
-      </section>
-
-      {/* VIDEO / TERMINAL SERVER - for high res images/videos/gifs rotation */}
-      <section id="video" className="border-t border-zinc-100 py-16 max-w-5xl mx-auto px-6">
-        <div className="uppercase tracking-[2px] text-xs text-emerald-600 mb-2">VIDEO CONCEPT</div>
-        <h2 className="text-4xl font-light tracking-tight mb-6">Terminal Media Server</h2>
-        <p className="max-w-2xl text-lg text-zinc-600 mb-8">
-          Activate the small terminal server to control rotation of high-res images, videos and gifs. 
-          For local testing: use the terminal below or run <code className="bg-zinc-100 px-1">npm run rotator-server</code> in your terminal (see package.json).
-          Deploy your build to the local server for testing the rotator with your own high-res files.
-        </p>
-
-        {/* Media Rotator Display */}
-        <div className="mb-8 border border-zinc-200 rounded-3xl overflow-hidden bg-black aspect-video relative flex items-center justify-center">
-          {currentMedia && (
-            currentMedia.type === 'video' ? (
-              <video 
-                key={currentMedia.id}
-                src={currentMedia.url} 
-                className="max-h-full max-w-full object-contain" 
-                autoPlay 
-                muted 
-                loop 
-                playsInline
-              />
-            ) : (
-              <img 
-                key={currentMedia.id}
-                src={currentMedia.url} 
-                alt={currentMedia.title} 
-                className="max-h-full max-w-full object-contain" 
-              />
-            )
-          )}
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 p-4 text-white text-sm flex justify-between items-end">
-            <div>
-              <div className="font-light">{currentMedia?.title}</div>
-              <div className="text-xs opacity-70">{currentMedia?.type} • {currentMediaIndex + 1} / {mediaItems.length}</div>
-            </div>
-            <div className="text-xs opacity-70">
-              {isRotating ? 'ROTATING' : 'PAUSED'} @ {rotationInterval}ms
-            </div>
-          </div>
+          <div className="mt-8 text-xs opacity-60">This PWA can be installed for quick access and works offline for browsing credits and images.</div>
         </div>
 
-        {/* Terminal Server Interface */}
-        <div className="border border-zinc-200 rounded-3xl bg-zinc-950 text-green-400 font-mono text-sm p-4">
-          <div className="flex items-center gap-2 mb-2 text-green-500 text-xs uppercase tracking-widest">
-            <span>TERMINAL SERVER</span> 
-            <span className="text-green-400">●</span> 
-            <span>localhost:8080</span>
-          </div>
-
-          <div className="h-48 overflow-auto bg-black p-3 mb-3 text-green-300 whitespace-pre-wrap text-xs leading-relaxed border border-green-900">
-            {terminalLines.map((line, i) => <div key={i}>{line}</div>)}
-          </div>
-
-          <form onSubmit={handleTerminalSubmit} className="flex gap-2">
-            <span className="text-green-500 pt-1">$</span>
-            <input
-              type="text"
-              value={terminalInput}
-              onChange={(e) => setTerminalInput(e.target.value)}
-              placeholder="Type command (help, play, next, activate, deploy, add ...)"
-              className="flex-1 bg-transparent border-none focus:outline-none text-green-400 placeholder-green-800"
-              autoComplete="off"
-            />
-            <button type="submit" className="px-4 py-1 border border-green-800 text-green-400 hover:bg-green-900/30 text-xs">EXEC</button>
+        {/* Contact / collab form — replace action with your Formspree endpoint (free at formspree.io) */}
+        <div className="mt-10 border border-[var(--border)] p-6 rounded bg-[var(--card-bg)]">
+          <div className="font-medium mb-1">DM for collabs / ancestry notes</div>
+          <p className="text-sm text-[var(--fg-muted)] mb-4">Send a message. I'll get back to you.</p>
+          <form
+            action="https://formspree.io/f/REPLACE_WITH_YOUR_ID"
+            method="POST"
+            className="space-y-3"
+          >
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <input name="name" required placeholder="Name" className="bg-[var(--bg)] border border-[var(--border)] px-3 py-2 rounded text-sm" />
+              <input type="email" name="email" required placeholder="Email" className="bg-[var(--bg)] border border-[var(--border)] px-3 py-2 rounded text-sm" />
+            </div>
+            <textarea name="message" required rows={4} placeholder="Message or collab idea..." className="w-full bg-[var(--bg)] border border-[var(--border)] px-3 py-2 rounded text-sm"></textarea>
+            <button type="submit" className="px-5 py-2 text-sm border border-[var(--fg)] rounded hover:bg-[var(--fg)] hover:text-[var(--bg)] transition">Send</button>
           </form>
-          <div className="text-[10px] text-green-800 mt-2">
-            Pro tip: "activate" or "server" starts the rotator server simulation. "deploy" simulates deploying the rotator for testing. Add your high-res URLs with "add".
-          </div>
+          <div className="text-[10px] mt-3 opacity-50">Form powered by Formspree (or swap for your preferred service). Update the action URL in the code.</div>
         </div>
 
-        <div className="mt-4 text-xs text-zinc-500">
-          For real local server with your high-res media: place files in a <code>public/media</code> folder (or serve from elsewhere) and update the mediaItems array. 
-          Run <code>npm run rotator-server</code> (add the script if not present) to host a small terminal-style server for testing the deployment.
+        <div className="pt-8">
+          <Link to="/" className="back-link"><ArrowLeft size={16}/> Home</Link>
         </div>
-      </section>
+      </div>
+    </PageTransition>
+  )
+}
 
-      {/* CONTACT */}
-      <section id="contact" className="border-t border-zinc-100 py-16 max-w-5xl mx-auto px-6">
-        <div className="uppercase tracking-[2px] text-xs text-emerald-600 mb-2">CONTACT</div>
-        <h2 className="text-4xl font-light tracking-tight mb-8">Let's talk</h2>
-        
-        <div className="flex flex-wrap gap-x-8 gap-y-2 text-lg">
-          <a href="https://www.linkedin.com/in/tadericson/" target="_blank" className="hover:text-emerald-600 flex items-center gap-2">LinkedIn <ExternalLink size={16} /></a>
-          <a href="http://www.imdb.com/name/nm2460024/" target="_blank" className="hover:text-emerald-600 flex items-center gap-2">IMDb <ExternalLink size={16} /></a>
-          <a href="https://vimeo.com/fornever" target="_blank" className="hover:text-emerald-600 flex items-center gap-2">Vimeo <ExternalLink size={16} /></a>
-          <a href="https://www.instagram.com/tadericson/" target="_blank" className="hover:text-emerald-600 flex items-center gap-2">Instagram <ExternalLink size={16} /></a>
+function ProjectDetail() {
+  const { category, slug } = useParams()
+  const project = getProject(slug || '')
+
+  if (!project || (category && project.category !== category)) {
+    return <Navigate to="/" replace />
+  }
+
+  return (
+    <PageTransition>
+      <div className="pt-8 max-w-3xl mx-auto">
+        <Link to={`/${project.category}`} className="back-link"><ArrowLeft size={16}/> Back to {project.category.toUpperCase()}</Link>
+
+        <h1 className="text-4xl tracking-[-1.5px] font-semibold mb-1">{project.title}</h1>
+        {project.year && <div className="text-[var(--fg-muted)] mb-6">{project.year} {project.role && `· ${project.role}`}</div>}
+
+        <div className="space-y-3 mb-8">
+          {project.images.map((img, i) => (
+            <img key={i} src={img} alt={project.title} className="w-full rounded border border-[var(--border)]" />
+          ))}
         </div>
-        <p className="mt-8 text-sm text-zinc-500">DMs open for collaborations and research notes.</p>
-      </section>
 
-      <footer className="py-10 text-center text-xs text-zinc-400 border-t border-zinc-100">
-        © 2026 Tad Ericson / Fornever Collective • All images copyright the artist
-      </footer>
-    </div>
+        {project.description && (
+          <p className="text-[var(--fg-muted)] mb-6">{project.description}</p>
+        )}
+
+        <div className="flex flex-wrap gap-3 text-sm">
+          {project.imdb && (
+            <a href={project.imdb} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 px-4 h-9 border border-[var(--border)] rounded hover:bg-[var(--card-bg)]">
+              IMDB <ExternalLink size={15} />
+            </a>
+          )}
+          {project.vimeo && (
+            <a href={project.vimeo} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 px-4 h-9 border border-[var(--border)] rounded hover:bg-[var(--card-bg)]">
+              Vimeo <ExternalLink size={15} />
+            </a>
+          )}
+          {project.link && (
+            <a href={project.link} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 px-4 h-9 border border-[var(--border)] rounded hover:bg-[var(--card-bg)]">
+              View Project <ExternalLink size={15} />
+            </a>
+          )}
+          <Link to={`/${project.category}`} className="inline-flex items-center gap-1.5 px-4 h-9 border border-[var(--border)] rounded hover:bg-[var(--card-bg)]">
+            More in {project.category.toUpperCase()}
+          </Link>
+        </div>
+
+        <div className="mt-12 text-xs text-[var(--fg-muted)]">Images served from archive CDN and cached locally by the PWA service worker for offline access.</div>
+      </div>
+    </PageTransition>
+  )
+}
+
+function App() {
+  return (
+    <Layout>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/tv" element={<TV />} />
+        <Route path="/film" element={<Film />} />
+        <Route path="/vevo" element={<Vevo />} />
+        <Route path="/3d" element={<ThreeD />} />
+        <Route path="/2d" element={<TwoD />} />
+        <Route path="/tree" element={<Tree />} />
+        <Route path="/info" element={<Info />} />
+        <Route path="/:category/:slug" element={<ProjectDetail />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Layout>
   )
 }
 
