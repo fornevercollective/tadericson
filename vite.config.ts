@@ -4,13 +4,16 @@ import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
+const base = process.env.VITE_BASE || '/'
+
 export default defineConfig({
+  base,
   plugins: [
     react(),
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'icons.svg'],
+      includeAssets: ['favicon.svg', 'favicon.png', 'apple-touch-icon.png', 'pwa-*.png'],
       manifest: {
         name: 'Tad Ericson',
         short_name: 'Tad Ericson',

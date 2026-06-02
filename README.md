@@ -44,14 +44,32 @@ The `dist/` folder is a fully static PWA ready for any static host (Vercel, Netl
 
 ## Deploy
 
-### GitHub Pages (example)
-Add to `vite.config.ts` if deploying to a subpath:
-```ts
-base: '/tadericson/',
-```
-Then use a simple deploy action or `gh-pages` package.
+GitHub Actions are set up for this repo:
 
-Recommended: deploy `dist/` as-is to root of a custom domain (tadericson.com).
+- **`.github/workflows/ci.yml`** — Runs on every push/PR to `main`: `npm ci`, lint, full TypeScript + Vite build (including PWA service worker + manifest generation), and verifies the PWA output files exist.
+- **`.github/workflows/deploy.yml`** — On push to `main` (or manual `workflow_dispatch`): builds the site and deploys the `dist/` folder to **GitHub Pages** using the official `actions/deploy-pages` flow (OIDC, no long-lived tokens).
+
+### Enabling GitHub Pages deployment
+1. Push this repo (including the `.github/workflows` files).
+2. Go to the repository **Settings → Pages**.
+3. Under "Build and deployment", set **Source** to **GitHub Actions** (this is what "Actions enabled" usually refers to).
+4. (Optional) Add your custom domain `tadericson.com` in the same Pages settings and configure DNS (CNAME or A records as documented by GitHub). The PWA manifest is already configured for root scope.
+
+The deploy workflow will then automatically publish on every push to `main`.
+
+### Subpath deploys (e.g. GitHub user/org site preview)
+If you ever deploy to a sub-directory like `https://fornevercollective.github.io/tadericson`:
+- Set the `VITE_BASE` environment variable in the deploy workflow (or as a Repository Variable).
+- Update `vite.config.ts` to respect it (already partially wired):
+  ```ts
+  const base = process.env.VITE_BASE || '/'
+  ```
+- The PWA plugin will pick up the correct base for the manifest and service worker scope.
+
+For the real `tadericson.com` (custom domain), leave base as `/` (current default).
+
+### Other hosts
+The plain `npm run build` output in `dist/` works on Vercel, Netlify, Cloudflare Pages, any static host, or even direct S3/CloudFront. Just point the host at the `dist` folder contents. The included service worker will still provide offline + installable PWA behavior.
 
 ## Content & Images
 - All project/credit data lives in `src/data/projects.ts`
@@ -66,7 +84,7 @@ Recommended: deploy `dist/` as-is to root of a custom domain (tadericson.com).
 - [ ] Dark mode toggle persisted
 - [ ] Contact / collab form (Formspree or similar)
 - [ ] RSS or simple blog for ancestry updates
-- [ ] 2D section content population
+- [ ] 2D section: flesh out with more real projects and descriptions (stubs exist)
 - [ ] Self-host all images + generate proper responsive sizes
 
 ## Original site
