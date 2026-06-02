@@ -35,10 +35,8 @@ jobs:
 
       - name: Build for production (PWA)
         run: npm run build
-        # If you ever deploy to a subpath (e.g. https://fornevercollective.github.io/tadericson)
-        # set an env var or repository variable VITE_BASE and update vite.config.ts accordingly.
-        # env:
-        #   VITE_BASE: /tadericson/
+        env:
+          VITE_BASE: /tadericson/
 
       - name: Setup Pages
         uses: actions/configure-pages@v4

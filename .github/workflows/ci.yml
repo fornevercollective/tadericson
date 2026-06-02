@@ -29,6 +29,8 @@ jobs:
 
       - name: Type check + Build (PWA)
         run: npm run build
+        env:
+          VITE_BASE: /tadericson/
 
       - name: Verify PWA output
         run: |
