@@ -77,15 +77,16 @@ The plain `npm run build` output in `dist/` works on Vercel, Netlify, Cloudflare
 - **Replace images** with your own optimized assets (WebP preferred) in `/public` or a CDN when ready for production. Update the `images` arrays in the data file.
 - Add richer descriptions, additional photos, video embeds per project as desired.
 
-## Next steps (ideas)
-- [ ] Interactive ancestry tree visualization (D3 / SVG / react-flow)
-- [ ] Search + filter across all credits
-- [ ] Lightbox with swipe for project images
-- [ ] Dark mode toggle persisted
-- [ ] Contact / collab form (Formspree or similar)
-- [ ] RSS or simple blog for ancestry updates
-- [ ] 2D section: flesh out with more real projects and descriptions (stubs exist)
-- [ ] Self-host all images + generate proper responsive sizes
+## Next steps (ideas) — informed by fornevercollective + qbitOS repos
+- [x] Dark mode toggle persisted (done — localStorage + system, CSS var theming like qbitOS sites)
+- [x] Search + filter across credits/sections (done — live filter in galleries, search-history inspired)
+- [x] Interactive ancestry tree (basic radial SVG viz + selection; spatial/globe/freya patterns)
+- [x] Contact / collab form (done — Formspree-ready in /info)
+- [ ] Lightbox with swipe for project images (framer-motion gestures ready to add)
+- [ ] RSS or simple blog for ancestry updates (use .qmd / corpus style from qbitOS docs)
+- [ ] 2D section: flesh out (stubs + visual experiments from ugrad-gameHUB etc.)
+- [ ] Self-host all images + responsive sizes (asset pipeline inspired by qbitos-media / spatial lane; add Node script + sharp)
+- [ ] Full interactive tree (D3 / react-flow / richer hierarchy + migration map) + timeline AI for credits/ancestry (qbitos-search-history + prefixes)
 
 ## Original site
 The live reference site is still at https://tadericson.com (this PWA is a ground-up modern mobile-first rebuild).
