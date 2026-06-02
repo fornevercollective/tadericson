@@ -124,9 +124,82 @@ function App() {
         </div>
       </nav>
 
-      {/* CLEAN HERO with subtle live element */}
+      {/* Active Camera moved to the right side of the screen */}
+      <div className="fixed right-4 top-24 z-50 w-72 bg-white border border-zinc-200 rounded-3xl shadow-sm p-4">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <div className="uppercase text-xs tracking-[2px] text-emerald-600 mb-0.5">LIVE</div>
+            <div className="text-lg font-light tracking-tight">Pixel Camera</div>
+          </div>
+          <button
+            onClick={isCameraOn ? stopLiveFeed : startLiveFeed}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-zinc-300 rounded-full hover:bg-zinc-50 active:bg-zinc-100 transition"
+          >
+            {isCameraOn ? (
+              <><Pause size={14} /> Stop</>
+            ) : (
+              <><Play size={14} /> Start</>
+            )}
+          </button>
+        </div>
+
+        <div className="relative rounded-xl overflow-hidden border border-zinc-200 bg-zinc-950">
+          <canvas
+            ref={canvasRef}
+            className="w-full"
+            style={{ aspectRatio: '16 / 9' }}
+          />
+          <video ref={videoRef} className="hidden" />
+
+          {!isCameraOn && (
+            <div className="absolute inset-0 flex items-center justify-center bg-white/90 text-center p-4">
+              <div>
+                <Camera className="mx-auto mb-2 text-emerald-600" size={22} />
+                <p className="text-[10px] text-zinc-500 leading-tight">Real-time<br />pixel + blur</p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {isCameraOn && (
+          <div className="mt-3 space-y-3 text-xs">
+            <div>
+              <div className="flex justify-between text-zinc-400 mb-1">
+                <span>PIXELATE</span>
+                <span>{pixelSize}</span>
+              </div>
+              <input
+                type="range"
+                min="1"
+                max="18"
+                step="1"
+                value={pixelSize}
+                onChange={(e) => setPixelSize(Number(e.target.value))}
+                className="w-full accent-emerald-600"
+              />
+            </div>
+            <div>
+              <div className="flex justify-between text-zinc-400 mb-1">
+                <span>BLUR</span>
+                <span>{blurAmount}</span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="12"
+                step="0.5"
+                value={blurAmount}
+                onChange={(e) => setBlurAmount(Number(e.target.value))}
+                className="w-full accent-emerald-600"
+              />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* CLEAN HERO - restored to before live camera was added */}
       <section id="home" className="pt-20 pb-16 max-w-5xl mx-auto px-6">
-        <div className="text-center mb-12">
+        <div className="text-center">
           <div className="mx-auto mb-6 w-48 h-48 rounded-2xl overflow-hidden border border-zinc-200 shadow-sm">
             <img 
               src="https://picsum.photos/id/64/800/800" 
@@ -137,68 +210,6 @@ function App() {
           <h1 className="text-6xl md:text-7xl font-light tracking-[-3px] mb-3">Tad Ericson</h1>
           <p className="text-xl text-zinc-500">Filmmaker • Camera • Fornever Collective • Oregon</p>
           <p className="mt-3 text-sm text-zinc-400 max-w-xs mx-auto">DM for collabs. Working on deep ancestry research with elders.</p>
-        </div>
-
-        {/* Elegant Live Lens Demo - integrated cleanly */}
-        <div className="mt-8 border border-zinc-200 rounded-3xl p-8 bg-white shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <div className="uppercase text-xs tracking-[2px] text-emerald-600 mb-1">ARTISTIC STUDY</div>
-              <div className="text-2xl font-light">Live Pixel Lens</div>
-            </div>
-            <button 
-              onClick={isCameraOn ? stopLiveFeed : startLiveFeed}
-              className="flex items-center gap-2 px-5 py-2 text-sm border border-zinc-300 rounded-full hover:bg-zinc-50 active:bg-zinc-100 transition"
-            >
-              {isCameraOn ? (
-                <><Pause size={16} /> Stop Live Feed</>
-              ) : (
-                <><Play size={16} /> Activate Camera</>
-              )}
-            </button>
-          </div>
-
-          <div className="relative rounded-2xl overflow-hidden border border-zinc-100 bg-zinc-950">
-            <canvas 
-              ref={canvasRef} 
-              className="w-full aspect-video object-cover" 
-            />
-            <video ref={videoRef} className="hidden" />
-
-            {!isCameraOn && (
-              <div className="absolute inset-0 flex items-center justify-center bg-white/80 text-center p-8">
-                <div>
-                  <Camera className="mx-auto mb-3 text-emerald-600" size={32} />
-                  <p className="text-sm text-zinc-500">Real-time pixelation + blur demo.<br />Click above to start your webcam.</p>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {isCameraOn && (
-            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
-              <div>
-                <label className="block text-xs uppercase tracking-widest mb-1.5 text-zinc-400">Pixelation</label>
-                <input 
-                  type="range" min="1" max="18" step="1" 
-                  value={pixelSize} 
-                  onChange={e => setPixelSize(Number(e.target.value))} 
-                  className="w-full accent-emerald-600" 
-                />
-                <div className="text-right text-xs text-zinc-400 mt-0.5">{pixelSize}</div>
-              </div>
-              <div>
-                <label className="block text-xs uppercase tracking-widest mb-1.5 text-zinc-400">Soft Blur</label>
-                <input 
-                  type="range" min="0" max="12" step="0.5" 
-                  value={blurAmount} 
-                  onChange={e => setBlurAmount(Number(e.target.value))} 
-                  className="w-full accent-emerald-600" 
-                />
-                <div className="text-right text-xs text-zinc-400 mt-0.5">{blurAmount}</div>
-              </div>
-            </div>
-          )}
         </div>
       </section>
 
