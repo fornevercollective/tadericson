@@ -668,7 +668,7 @@ function App() {
   // Toggle for other content / work surface visibility. When false, video feed is pure full background, UI (sections, tools, captions box, search, most header) hidden.
   // Translucent glass surfaces appear over the live feed bg when visible.
   const [uiVisible, setUiVisible] = useState(true)
-  const [floatingControlsVisible, setFloatingControlsVisible] = useState(true)
+  const [floatingControlsVisible, setFloatingControlsVisible] = useState(false)
 
   // For custom left dropdown like overview with sub collapsability
   const [showLeftMenu, setShowLeftMenu] = useState(false)
@@ -805,15 +805,13 @@ function App() {
   }
 
   return (
-    <div className="app-shell">
-      {/* VIDEO FEED AS FULL BACKGROUND ELEMENT.
-          The processed feed — local cam OR external live stream (ffplay/ffmpeg local http, fornevercollective.github.io/blank/ etc) —
-          with flip + pixelation + blur + mixed thermal/fax/invert/scan/seg effects — is the immersive bg.
-          Internal res 1280x720 with CSS cover. Hidden <video> is the source (srcObject or .src). */}
-      <div className="fixed inset-0 z-0 bg-black">
+    <div className={`app-shell${isFeedOn ? ' feed-active' : ''}`}>
+      {/* VIDEO FEED AS FULL BACKGROUND — only when live feed is on (header 32×32 / LIVE pill). */}
+      <div className={`fixed inset-0 z-0 ${isFeedOn ? 'bg-black' : 'bg-white'}`}>
         <canvas
           ref={canvasRef}
-          className="w-full h-full object-cover"
+          className={`w-full h-full object-cover transition-opacity duration-200 ${isFeedOn ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+          aria-hidden={!isFeedOn}
         />
         <video ref={videoRef} className="hidden" muted playsInline />
         {/* Subtle live badge only when UI hidden, so pure feed has minimal chrome */}
@@ -1338,12 +1336,12 @@ function App() {
               {/* Small arrows for explicit left/right */}
               <button
                 onClick={prevPhoto}
-                className={`absolute left-0 top-1/2 -translate-y-1/2 z-40 ${isMobile ? 'text-[14px] px-0.5' : 'text-[18px] px-1'} text-white/70 hover:text-white bg-black/30 rounded`}
+                className={`absolute left-0 top-1/2 -translate-y-1/2 z-40 ${isMobile ? 'text-[14px] px-0.5' : 'text-[18px] px-1'} text-zinc-600 hover:text-zinc-900 bg-zinc-200/80 rounded`}
                 title="Previous photo"
               >‹</button>
               <button
                 onClick={nextPhoto}
-                className={`absolute right-0 top-1/2 -translate-y-1/2 z-40 ${isMobile ? 'text-[14px] px-0.5' : 'text-[18px] px-1'} text-white/70 hover:text-white bg-black/30 rounded`}
+                className={`absolute right-0 top-1/2 -translate-y-1/2 z-40 ${isMobile ? 'text-[14px] px-0.5' : 'text-[18px] px-1'} text-zinc-600 hover:text-zinc-900 bg-zinc-200/80 rounded`}
                 title="Next photo"
               >›</button>
             </div>
@@ -1383,7 +1381,7 @@ function App() {
                   onChange={e => setPaperContent(e.target.value)}
                   placeholder="Write paper here..."
                 />
-                <div className="text-[10px] text-white/50 mt-0.5">Saved to localStorage • switch to "Research Paper" in top bar for full focus</div>
+                <div className="text-[10px] text-zinc-500 mt-0.5">Saved to localStorage • switch to "Research Paper" in top bar for full focus</div>
               </div>
 
               {/* Audio Notes recorder */}
@@ -1473,7 +1471,7 @@ function App() {
                   value={paperContent}
                   onChange={e => setPaperContent(e.target.value)}
                 />
-                <div className="text-[10px] text-white/50 mt-1">Auto-saved. Also editable in the left drawer. Export via browser print → Save as PDF.</div>
+                <div className="text-[10px] text-zinc-500 mt-1">Auto-saved. Also editable in the left drawer. Export via browser print → Save as PDF.</div>
               </div>
             )}
 
@@ -1484,7 +1482,7 @@ function App() {
                   {isRecording ? 'STOP RECORDING' : 'START MIC RECORDING'}
                 </button>
                 <div className="space-y-2">
-                  {recordings.length === 0 && <p className="text-white/50 text-sm">No recordings yet. Use the mic. Recordings are session-only (download to persist).</p>}
+                  {recordings.length === 0 && <p className="text-zinc-500 text-sm">No recordings yet. Use the mic. Recordings are session-only (download to persist).</p>}
                   {recordings.map(r => (
                     <div key={r.id} className="recording-item">
                       <button onClick={() => new Audio(r.url).play()}>▶ Play</button>
@@ -1504,9 +1502,9 @@ function App() {
                   <input className="note-input flex-1" placeholder="Drop a thought, quote, or reminder..." value={soundingInput} onChange={e=>setSoundingInput(e.target.value)} onKeyDown={e=>e.key==='Enter'&&addToSoundingBoard()} />
                   <button onClick={addToSoundingBoard} className="px-4 rounded bg-white text-black text-sm">Add</button>
                 </div>
-                <button onClick={clearSounding} className="text-xs text-white/40 mb-2">clear all</button>
+                <button onClick={clearSounding} className="text-xs text-zinc-400 mb-2">clear all</button>
                 <div className="space-y-2 text-sm">
-                  {soundingEntries.map(e => <div key={e.id} className="border-l-2 border-white/20 pl-2 text-white/80">{e.text} <span className="text-white/30 text-xs">— {e.ts}</span></div>)}
+                  {soundingEntries.map(e => <div key={e.id} className="border-l-2 border-zinc-300 pl-2 text-zinc-800">{e.text} <span className="text-zinc-400 text-xs">— {e.ts}</span></div>)}
                 </div>
               </div>
             )}
@@ -1592,8 +1590,8 @@ function App() {
 
                 {/* TREE full */}
                 <div>
-                  <div className="flex items-center gap-3 mb-3 border-b border-white/10 pb-1">
-                    <span className="text-lg">The Tree</span>
+                  <div className="flex items-center gap-3 mb-3 border-b border-zinc-200 pb-1">
+                    <span className="text-lg text-zinc-900">The Tree</span>
                   </div>
                   <p className="text-zinc-700 mb-3 text-sm">{site.homeIntro.ancestryNote} Code research tools extend this work.</p>
                   <div className="flex flex-wrap gap-2 text-sm mb-2">
@@ -1638,7 +1636,7 @@ function App() {
         </div>
       </div>
 
-      <footer className="text-[10px] text-center py-1 text-white/30 border-t border-white/10 flex-shrink-0">
+      <footer className={`site-footer text-[10px] text-center py-1 flex-shrink-0 border-t ${isFeedOn ? 'text-white/30 border-white/10' : 'text-zinc-400 border-zinc-200'}`}>
         © FORNEVER COLLECTIVE • TAD ERICSON — CINEMATIC PWA + RESEARCH TOOLS (drawer + search bar)
       </footer>
       </>
