@@ -35,6 +35,14 @@ function App() {
     }
     if (animationRef.current != null) cancelAnimationFrame(animationRef.current)
     setIsCameraOn(false)
+
+    // Clear the canvas so the static artistic bg shows through when off
+    if (canvasRef.current) {
+      const ctx = canvasRef.current.getContext('2d')
+      if (ctx) {
+        ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height)
+      }
+    }
   }
 
   const processFrame = useCallback(() => {
@@ -139,7 +147,7 @@ function App() {
         setIsRotating(false)
         output += '\nRotation paused.'
         break
-      case 'speed':
+      case 'speed': {
         const ms = parseInt(parts[1])
         if (ms >= 1000) {
           setRotationInterval(ms)
@@ -148,13 +156,14 @@ function App() {
           output += '\nMinimum speed 1000ms.'
         }
         break
+      }
       case 'list':
         output += '\n' + mediaItems.map((m, i) => `  ${i}: [${m.type}] ${m.title}`).join('\n')
         break
       case 'status':
         output += `\nIndex: ${currentMediaIndex} | Rotating: ${isRotating} | Interval: ${rotationInterval}ms | Items: ${mediaItems.length}`
         break
-      case 'add':
+      case 'add': {
         if (parts[1]) {
           const url = parts[1]
           const type = parts[2] || 'image'
@@ -165,6 +174,7 @@ function App() {
           output += '\nUsage: add <url> [image|video|gif]'
         }
         break
+      }
       case 'activate':
       case 'server':
         output += '\n[TERMINAL SERVER] Activating small terminal server...'
@@ -248,92 +258,76 @@ function App() {
         </div>
       </nav>
 
-      {/* Active Camera moved to the right side of the screen */}
-      <div className="fixed right-4 top-24 z-50 w-72 bg-white border border-zinc-200 rounded-3xl shadow-sm p-4">
-        <div className="flex items-center justify-between mb-3">
-          <div>
-            <div className="uppercase text-xs tracking-[2px] text-emerald-600 mb-0.5">LIVE</div>
-            <div className="text-lg font-light tracking-tight">Pixel Camera</div>
+      {/* HERO with Live Camera + GMUNK-style processed background as full artistic bg */}
+      <section id="home" className="relative h-screen flex items-center justify-center overflow-hidden">
+        {/* Static artistic background fallback (when camera off) */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center" 
+          style={{ backgroundImage: `url(https://picsum.photos/id/1015/1920/1080)` }} 
+        />
+
+        {/* The processed live camera feed as the background (GMUNK pixel + blur style) - only active when camera on */}
+        <canvas 
+          ref={canvasRef} 
+          className="absolute inset-0 w-full h-full object-cover opacity-80 scale-105" 
+        />
+        <video ref={videoRef} className="hidden" />
+
+        {/* Gradient overlay for readability over the processed bg */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/70 to-black" />
+
+        {/* Live Controls - off to the right side of the screen */}
+        <div className="absolute top-28 right-8 z-30 bg-zinc-950/80 backdrop-blur-xl p-6 rounded-3xl border border-zinc-700 w-72">
+          <div className="flex items-center gap-3 mb-5">
+            <Camera className="w-5 h-5 text-emerald-400" />
+            <span className="uppercase text-xs tracking-[2px]">Live Lens Feed</span>
           </div>
+
           <button
             onClick={isCameraOn ? stopLiveFeed : startLiveFeed}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-zinc-300 rounded-full hover:bg-zinc-50 active:bg-zinc-100 transition"
+            className="w-full py-4 rounded-2xl bg-white text-black font-medium flex items-center justify-center gap-3 hover:bg-zinc-200 mb-6"
           >
             {isCameraOn ? (
-              <><Pause size={14} /> Stop</>
+              <><Pause className="w-5 h-5" /> Stop Feed</>
             ) : (
-              <><Play size={14} /> Start</>
+              <><Play className="w-5 h-5" /> Activate Camera</>
             )}
           </button>
-        </div>
 
-        <div className="relative rounded-xl overflow-hidden border border-zinc-200 bg-zinc-950">
-          <canvas
-            ref={canvasRef}
-            className="w-full"
-            style={{ aspectRatio: '16 / 9' }}
-          />
-          <video ref={videoRef} className="hidden" />
-
-          {!isCameraOn && (
-            <div className="absolute inset-0 flex items-center justify-center bg-white/90 text-center p-4">
+          {isCameraOn && (
+            <div className="space-y-6">
               <div>
-                <Camera className="mx-auto mb-2 text-emerald-600" size={22} />
-                <p className="text-[10px] text-zinc-500 leading-tight">Real-time<br />pixel + blur</p>
+                <div className="text-xs text-zinc-400 mb-1">PIXELATE</div>
+                <input 
+                  type="range" min="1" max="20" value={pixelSize} 
+                  onChange={e => setPixelSize(+e.target.value)} 
+                  className="w-full accent-emerald-400" 
+                />
+              </div>
+              <div>
+                <div className="text-xs text-zinc-400 mb-1">BLUR</div>
+                <input 
+                  type="range" min="0" max="15" value={blurAmount} 
+                  onChange={e => setBlurAmount(+e.target.value)} 
+                  className="w-full accent-emerald-400" 
+                />
               </div>
             </div>
           )}
         </div>
 
-        {isCameraOn && (
-          <div className="mt-3 space-y-3 text-xs">
-            <div>
-              <div className="flex justify-between text-zinc-400 mb-1">
-                <span>PIXELATE</span>
-                <span>{pixelSize}</span>
-              </div>
-              <input
-                type="range"
-                min="1"
-                max="18"
-                step="1"
-                value={pixelSize}
-                onChange={(e) => setPixelSize(Number(e.target.value))}
-                className="w-full accent-emerald-600"
-              />
-            </div>
-            <div>
-              <div className="flex justify-between text-zinc-400 mb-1">
-                <span>BLUR</span>
-                <span>{blurAmount}</span>
-              </div>
-              <input
-                type="range"
-                min="0"
-                max="12"
-                step="0.5"
-                value={blurAmount}
-                onChange={(e) => setBlurAmount(Number(e.target.value))}
-                className="w-full accent-emerald-600"
-              />
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* CLEAN HERO - restored to before live camera was added */}
-      <section id="home" className="pt-20 pb-16 max-w-5xl mx-auto px-6">
-        <div className="text-center">
-          <div className="mx-auto mb-6 w-48 h-48 rounded-2xl overflow-hidden border border-zinc-200 shadow-sm">
+        {/* Center Content - restored / synced with the clean aesthetic and original content */}
+        <div className="relative z-20 text-center px-6 max-w-4xl">
+          <div className="mx-auto mb-8 w-56 h-56 rounded-3xl overflow-hidden border-4 border-white/30 shadow-2xl">
             <img 
               src="https://picsum.photos/id/64/800/800" 
               alt="Tad Ericson" 
-              className="w-full h-full object-cover" 
+              className="object-cover w-full h-full" 
             />
           </div>
-          <h1 className="text-6xl md:text-7xl font-light tracking-[-3px] mb-3">Tad Ericson</h1>
-          <p className="text-xl text-zinc-500">Filmmaker • Camera • Fornever Collective • Oregon</p>
-          <p className="mt-3 text-sm text-zinc-400 max-w-xs mx-auto">DM for collabs. Working on deep ancestry research with elders.</p>
+          <h1 className="text-7xl md:text-8xl font-light tracking-[-4px] mb-4 text-white">Tad Ericson</h1>
+          <p className="text-2xl text-zinc-300 mb-10">Filmmaker • Camera • Fornever Collective</p>
+          <p className="text-sm text-zinc-400 max-w-xs mx-auto">DM for collabs. Working on deep ancestry research with elders of the world.</p>
         </div>
       </section>
 
