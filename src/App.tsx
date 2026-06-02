@@ -25,7 +25,8 @@ function Nav() {
   const isActive = useActivePath()
   const loc = useLocation()
 
-  // Close mobile nav on route change
+  // Close mobile nav on route change.
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional UI reset on navigation
   useEffect(() => { setOpen(false) }, [loc.pathname])
 
   return (
@@ -81,20 +82,32 @@ function Nav() {
   )
 }
 
+// Minimal type for the beforeinstallprompt event (PWA install prompt)
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform?: string }>
+}
+
+// Augment the DOM lib so addEventListener accepts the event name with proper type (no any casts needed)
+declare global {
+  interface WindowEventMap {
+    beforeinstallprompt: BeforeInstallPromptEvent
+  }
+}
+
 function PWAInstallButton() {
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
-  const [installed, setInstalled] = useState(false)
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null)
+  const [installed, setInstalled] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false
+    return window.matchMedia('(display-mode: standalone)').matches
+  })
 
   useEffect(() => {
-    const handler = (e: any) => {
+    const handler = (e: BeforeInstallPromptEvent) => {
       e.preventDefault()
       setDeferredPrompt(e)
     }
     window.addEventListener('beforeinstallprompt', handler)
-    // Detect if already installed (standalone mode)
-    if (window.matchMedia('(display-mode: standalone)').matches) {
-      setInstalled(true)
-    }
     return () => window.removeEventListener('beforeinstallprompt', handler)
   }, [])
 
@@ -126,21 +139,23 @@ function PWAInstallButton() {
 }
 
 function ThemeToggle() {
-  const [theme, setTheme] = useState<'light' | 'dark'>('light')
-
-  useEffect(() => {
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    if (typeof window === 'undefined') return 'light'
     const stored = localStorage.getItem('theme') as 'light' | 'dark' | null
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-    const initial: 'light' | 'dark' = stored || (prefersDark ? 'dark' : 'light')
-    setTheme(initial)
-    document.documentElement.classList.toggle('dark', initial === 'dark')
-  }, [])
+    if (stored) return stored
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  })
+
+  // Apply class as a side effect only (avoids set-state-in-effect lint rule)
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', theme === 'dark')
+  }, [theme])
 
   const toggle = () => {
     const next: 'light' | 'dark' = theme === 'light' ? 'dark' : 'light'
     setTheme(next)
     localStorage.setItem('theme', next)
-    document.documentElement.classList.toggle('dark', next === 'dark')
+    // DOM update also happens via the effect above
   }
 
   const isDark = theme === 'dark'

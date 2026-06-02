@@ -24,7 +24,9 @@ const updateSW = async () => {
           }
         })
       }
-    } catch (e) {}
+    } catch {
+      // ignore – best effort service worker update check
+    }
   }
 }
 updateSW()
