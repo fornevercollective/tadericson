@@ -1,0 +1,50 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Dependencies
+node_modules
+.pnp
+.pnp.js
+
+# Testing
+coverage
+
+# Production build
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Vite specific
+.vite
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# PWA / Workbox generated (keep the source icons, but built ones are in dist)
+# We commit the generated icons in public/ for the PWA manifest
+
+# Misc
+*.tsbuildinfo
+next-env.d.ts
+
+# OS
+Thumbs.db
