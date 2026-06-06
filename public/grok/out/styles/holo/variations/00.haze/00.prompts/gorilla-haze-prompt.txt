@@ -1,0 +1,25 @@
+Apply the Haze Portrait featured template. Transform the person in the input image into a cinematic chromatic haze portrait of the same person... subtle three-quarter side portrait... soft double-exposure-like chromatic offset... dreamy optic. Use additional styles from sunny-morning, professional-headshot, quality-enhancer, glossy-product-shot for the haze effect, lighting, and dreamy optic.
+
+Ancestry / hominin variation: Gorilla (Gorilla gorilla) (Modern Primate - Gorilla), Extant. Gorilla skull, massive sagittal crest for jaw muscles, enormous brow ridge, huge projecting face and jaw, small braincase, accurate to modern gorilla anatomy. sagittal crest, massive brow, huge jaw. Accurate to fossil refs like Bone Clones, Smithsonian 3d.si.edu, Australian Museum.
+
+
+Duplicate the resulting hazy image. Flip the copy on the vertical axis (horizontal mirror). Apply multi-exposure editing, blur and stretch to create a blurred stretched version of both sides of the center photo for the left and right side panels, with chromatic haze and offset for a really pronounced holographic effect when viewed with blue/red 3D glasses.
+
+Keep the center as the sharp regular variation with iridescence from the regular (non-haze) version.
+
+Combine the center regular iridescent variation with the left and right haze side panels into a larger combined Holographic ID/Playing Card / collectors / character card.
+
+Use the Product Showcase featured template (or Holo Skull Badge template) for the framing of the entire wide card: glossy iridescent holographic glass-like material with rainbow refraction, scanlines, floating 3D depth, as a premium collectible playing/collectors/character card.
+
+Preserve the exact identity, face shape, proportions, skin tone, hair, expression, and head size/scale from the reference photo 100% in the center and overall.
+
+The final image should be a wide larger card (approximately 16:9 or 2:1 aspect) suitable for a holographic playing/collectors/character card.
+
+Add text framing: top header "HOLO HAZE • [DISPLAY] • [SPECIMEN_ID]", bottom footer with era, unified migration lineage or team info, traits, and key prompt excerpt.
+
+
+Specific for this card: Ancestry / hominin variation: Gorilla (Gorilla gorilla) (Modern Primate - Gorilla), Extant. Gorilla skull, massive sagittal crest for jaw muscles, enormous brow ridge, huge projecting face and jaw, small braincase, accurate to modern gorilla anatomy. sagittal crest, massive brow, huge jaw. Accurate to fossil refs like Bone Clones, Smithsonian 3d.si.edu, Australian Museum.
+
+Use this exact text for the card framing:
+Top header: "HOLO HAZE • Gorilla (Gorilla gorilla) • Modern Primate - Gorilla"
+Bottom footer: "Extant | sagittal crest, massive brow, huge jaw | Gorilla skull, massive sagittal crest for jaw muscles, enormous brow ridge, huge projecting face and..."
